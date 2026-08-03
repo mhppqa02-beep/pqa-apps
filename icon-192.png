@@ -1,0 +1,48 @@
+==================================================================
+ 日報アプリの Code.gs に、下のコードを「追記」してください。
+ （既存の getMasters / getLaporanHarian / simpanLaporan は
+   そのまま。中身は書き換えません。）
+ ※ ログイン ID=pqa / パスワード=pqa2026 を含みます。
+   変えたい時は APP_USER / APP_PASS を書き換えてください。
+==================================================================
+
+var APP_USER   = 'pqa';
+var APP_PASS   = 'pqa2026';
+var AUTH_SECRET = 'ganti-rahasia-ini-2026';   // 任意の文字列に変更可
+
+function makeToken_(){
+  return Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(APP_USER + '|' + APP_PASS, AUTH_SECRET));
+}
+function checkToken_(t){ return t && t === makeToken_(); }
+
+function doPost(e){
+  var out;
+  try{
+    var req = JSON.parse(e.postData.contents);
+    if(req.action === 'login'){
+      if(req.username === APP_USER && req.password === APP_PASS) out = {ok:true, token: makeToken_()};
+      else out = {ok:false, error:'invalid'};
+    } else if(!checkToken_(req.token)){
+      out = {error:'unauthorized'};
+    } else if(req.action === 'masters'){
+      out = getMasters();
+    } else if(req.action === 'laporan'){
+      out = getLaporanHarian(req.tgl, req.wil);
+    } else if(req.action === 'simpan'){
+      out = simpanLaporan(req.payload) || {ok:true};
+    } else {
+      out = {error:'unknown action: ' + req.action};
+    }
+  }catch(err){
+    out = {error:String(err)};
+  }
+  return ContentService.createTextOutput(JSON.stringify(out))
+                       .setMimeType(ContentService.MimeType.JSON);
+}
+
+==================================================================
+ 追記後: デプロイ → デプロイを管理 → 鉛筆 →
+         バージョン "新バージョン" → デプロイ
+ アクセス: 「全員(Anyone)」にする
+==================================================================

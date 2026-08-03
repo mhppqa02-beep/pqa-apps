@@ -1,0 +1,39 @@
+const CACHE = "pqa-shell-v1";
+const SHELL = ["./", "./index.html", "./manifest.json"];
+
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE).then((c) => c.addAll(SHELL).catch(() => {})).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  // Data ke GAS (POST) selalu lewat network, jangan di-cache.
+  if (req.method !== "GET") return;
+
+  // Reload halaman saat offline -> tampilkan index.html dari cache (anti freeze).
+  if (req.mode === "navigate") {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put("./index.html", copy));
+          return res;
+        })
+        .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  // Aset lain: cache dulu, kalau tidak ada ambil dari network.
+  e.respondWith(caches.match(req).then((c) => c || fetch(req)));
+});
