@@ -4,175 +4,96 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PQA Apps</title>
-
-<!-- ===== PWA（アイコン・インストール用。書き換え不要）===== -->
-<meta name="theme-color" content="#0b3d1f">
+<meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="PQA Apps">
 <meta name="mobile-web-app-capable" content="yes">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-
 <style>
-  :root{
-    --bg0:#07301a; --bg1:#0b3d1f; --green:#1f7a3d; --green2:#3fae5a; --canopy:#8fd19e;
-    --paper:#f3f7f2; --sun:#f2b705; --line:rgba(255,255,255,.13); --card:rgba(255,255,255,.05);
-    --disp:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
-  }
   *{box-sizing:border-box} html,body{margin:0}
-  body{
-    min-height:100dvh; font-family:var(--body); color:var(--paper);
-    background:radial-gradient(120% 80% at 50% -10%, #12522b 0%, var(--bg1) 42%, var(--bg0) 100%);
-    -webkit-font-smoothing:antialiased; overflow-x:hidden;
-    padding:max(20px,env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
-  }
-  /* 等高線（RS/測量の世界観）を背景に薄く */
-  .contours{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
-  .wrap{position:relative;z-index:1;max-width:560px;margin:0 auto}
-
-  header{display:flex;align-items:center;gap:14px;padding:6px 2px 22px}
-  .mark{width:56px;height:56px;border-radius:15px;flex:0 0 auto;
-    box-shadow:0 6px 20px rgba(0,0,0,.35);background:#fff}
-  .brand h1{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.5px;margin:0;line-height:1}
-  .brand p{margin:5px 0 0;font-size:12.5px;color:var(--canopy);letter-spacing:.2px}
-
-  .lead{font-family:var(--disp);font-weight:500;font-size:15px;color:#cfe9d6;
-    margin:2px 2px 14px;display:flex;align-items:center;gap:9px}
-  .lead::before{content:"";width:22px;height:2px;background:var(--sun);border-radius:2px}
-
-  .tool{display:flex;align-items:center;gap:15px;width:100%;text-align:left;text-decoration:none;
-    color:var(--paper);background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:16px 15px;margin-bottom:12px;cursor:pointer;
-    transition:transform .12s ease,border-color .12s ease,background .12s ease}
-  .tool:hover{border-color:rgba(143,209,158,.5);background:rgba(255,255,255,.08)}
-  .tool:active{transform:scale(.985)}
-  .tool:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
-  .tool.off{opacity:.55}
-  .ic{width:46px;height:46px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
-    border-radius:12px;background:linear-gradient(160deg,var(--green2),var(--green));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
-  .ic svg{width:26px;height:26px;stroke:#fff;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
-  .tx{flex:1;min-width:0}
-  .tx .name{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.3px}
-  .tx .desc{font-size:12.5px;color:#bcd8c4;margin-top:2px}
-  .tag{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--bg1);background:var(--canopy);
-    padding:2px 7px;border-radius:20px;align-self:flex-start;margin-top:1px}
-  .chev{flex:0 0 auto;color:var(--canopy);opacity:.8}
-  .chev svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-
-  footer{margin-top:22px;text-align:center;font-size:11.5px;color:#7fae8d;line-height:1.7}
-  footer .v{opacity:.7}
-
-  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:5;
-    background:#06251380;backdrop-filter:blur(6px);border:1px solid var(--line);color:#fff;
-    padding:11px 18px;border-radius:24px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none}
+  body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:#f4f7f5;color:#10233b;
+    padding:max(18px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+  .wrap{max-width:520px;margin:0 auto}
+  header{display:flex;align-items:center;gap:12px;padding:4px 2px 18px}
+  header img{width:48px;height:48px;border-radius:12px}
+  header h1{margin:0;font-size:20px;font-weight:800;color:#1b5e20}
+  header p{margin:2px 0 0;font-size:12px;color:#5a6b80}
+  .group{font-size:13px;font-weight:700;letter-spacing:.4px;color:#5a6b80;margin:18px 4px 10px}
+  .card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #e2e9e4;
+    border-radius:14px;padding:15px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .card:active{transform:scale(.99)}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+  .b-con{background:#e8f5e9;color:#2e7d32}
+  .b-rs{background:#e3f2fd;color:#1565c0}
+  .card h2{margin:0;font-size:17px;font-weight:800}
+  .card .desc{margin:3px 0 10px;font-size:12.5px;color:#5a6b80}
+  .buka{font-size:13px;font-weight:700;color:#1565c0}
+  .card.off .buka{color:#9aa7b2}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#263238;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none}
   .toast.show{opacity:1}
-
-  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-  .fade{opacity:0;transform:translateY(8px);animation:in .5s ease forwards}
-  .fade:nth-child(1){animation-delay:.02s}.fade:nth-child(2){animation-delay:.08s}
-  .fade:nth-child(3){animation-delay:.14s}.fade:nth-child(4){animation-delay:.2s}
-  @keyframes in{to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
-
-<svg class="contours" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <g fill="none" stroke="#8fd19e" stroke-width="1" opacity="0.10">
-    <path d="M-40 120 C 90 60, 260 180, 460 90"/>
-    <path d="M-40 170 C 90 110, 260 230, 460 140"/>
-    <path d="M-40 230 C 110 170, 250 300, 460 210"/>
-    <path d="M-40 470 C 120 410, 250 540, 460 450"/>
-    <path d="M-40 520 C 120 460, 250 590, 460 500"/>
-    <path d="M-40 580 C 100 520, 270 650, 460 560"/>
-    <path d="M-40 650 C 120 600, 250 720, 460 640"/>
-  </g>
-</svg>
-
 <div class="wrap">
-  <header class="fade">
-    <img class="mark" src="icon-192.png" alt="PQA Apps">
-    <div class="brand">
-      <h1>PQA Apps</h1>
-      <p>PT Musi Hutan Persada · Plantation Quality Assessment</p>
-    </div>
+  <header>
+    <img src="icon-192.png" alt="PQA Apps">
+    <div><h1>PQA Apps</h1><p>PT Musi Hutan Persada &middot; PQA Division</p></div>
   </header>
 
-  <div class="lead fade">Pilih aplikasi</div>
+  <div class="group">INPUT LAPANGAN (OFFLINE)</div>
 
-  <a class="tool fade" id="t_uav">
-    <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4"/><path d="M12 9.6V6M9.6 12H6M14.4 12H18M12 14.4V18"/><circle cx="5" cy="5" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/></svg></span>
-    <span class="tx"><span class="name">UAV</span><span class="desc">Akuisisi drone &amp; flight log (offline)</span></span>
-    <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+  <a class="card" id="c_col">
+    <span class="badge b-con">Conventional</span>
+    <h2>Conventional - Input Lapangan</h2>
+    <div class="desc">Konvensional &amp; Coppice &middot; assessment offline</div>
+    <span class="buka">Buka &rarr;</span>
   </a>
 
-  <a class="tool fade" id="t_rs">
-    <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 14l4-4 3 3 5-6"/><path d="M14 7h3v3"/><path d="M3 20c3-1 5-3 6-6"/><circle cx="5" cy="19" r="1"/></svg></span>
-    <span class="tx"><span class="name">RS</span><span class="desc">Laporan harian Remote Sensing</span></span>
-    <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+  <a class="card" id="c_rsol">
+    <span class="badge b-rs">Remote Sensing</span>
+    <h2>RS - Input Lapangan</h2>
+    <div class="desc">Akuisisi &middot; flight log &middot; perbandingan (offline)</div>
+    <span class="buka">Buka &rarr;</span>
   </a>
 
-  <a class="tool fade" id="t_laporan">
-    <span class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M12.5 14c1.8 0 3-1.4 3-3-2 0-3 1-3 3z"/><path d="M12.5 14c-1.6 0-2.6-1-2.6-2.6 1.8 0 2.6 1 2.6 2.6z"/><path d="M12.5 17v-3"/></svg></span>
-    <span class="tx"><span class="name">Laporan</span><span class="desc">Laporan harian konvensional</span></span>
-    <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+  <div class="group">LAPORAN HARIAN</div>
+
+  <a class="card" id="c_crh">
+    <span class="badge b-con">Conventional</span>
+    <h2>Conventional - Laporan Harian</h2>
+    <div class="desc">Konvensional &amp; Coppice</div>
+    <span class="buka">Buka &rarr;</span>
   </a>
 
-  <a class="tool fade" id="t_data">
-    <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 20V4"/><path d="M4 20h16"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg></span>
-    <span class="tx"><span class="name">Data</span><span class="desc">Dashboard &amp; monitoring</span></span>
-    <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+  <a class="card" id="c_rsrh">
+    <span class="badge b-rs">Remote Sensing</span>
+    <h2>RS - Laporan Harian</h2>
+    <div class="desc">Dari data UAV</div>
+    <span class="buka">Buka &rarr;</span>
   </a>
-
-  <footer>
-    PT MHP · PQA Division<br>
-    <span class="v">PQA Apps · v1</span>
-  </footer>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  /* =========================================================
-     ★ここだけ書き換えます。各アプリのURLを入れてください。
-       ・UAV      : UAV現場入力(RSOL) の URL（Apps Scriptの /exec、または ./UAV_index.html）
-       ・RS       : RS日報(RSRH) の Apps Script /exec（google.script.run を使うため /exec 必須）
-       ・Laporan  : 従来の日報(CRH) の Apps Script /exec
-       ・Data     : Power BI 等ダッシュボードの共有URL
-       未設定のままだと、押したとき「URL belum diatur」と出ます。
-     ========================================================= */
+  /*各カードの「Buka」の飛び先。分かったURLをここに貼るだけ。 */
   var LINKS = {
-    uav:     "PASTE_UAV_URL",
-    rs:      "PASTE_RS_URL",
-    laporan: "PASTE_LAPORAN_URL",
-    data:    "PASTE_DATA_URL"
+    col:  "https://script.google.com/macros/s/AKfycbzZU3BGkFkj_Fo6JvUDVTPGU-JAqm3N_iCUuaOOp7f45_jCVz5H3ERFHEK3rrFzDff-0w/exec",
+    rsol: "https://script.google.com/macros/s/AKfycbxWq_9laf5ccNFV6HFWg7L1F6gyp4YfAkcQXxVIad2eQVk_fc18PPHq9q1uja5sguL0/exec",
+    crh:  "https://script.google.com/macros/s/AKfycbxvs4OLIRrAGfgH2lz4pmJaLvNHY9_tzivDK_vx3QZp5_wqXQqBoJmg0tm14_cwI1emrQ/exec",
+    rsrh: "https://script.google.com/macros/s/AKfycbw5Us9diHE9x-a-UDeTD5cbjPPJL8LmbiBZvdJmfNdWFuRwVgh_wji8avdp8OVz98IpfQ/exec"
   };
-
-  function wire(id, url){
-    var a = document.getElementById(id);
-    var set = url && url.indexOf("PASTE_") !== 0 && url.indexOf("http") === 0;
-    if(set){ a.href = url; a.setAttribute("rel","noopener"); }
-    else{
-      a.classList.add("off");
-      a.addEventListener("click", function(e){ e.preventDefault(); toast("URL belum diatur"); });
-    }
-  }
-  wire("t_uav", LINKS.uav);
-  wire("t_rs", LINKS.rs);
-  wire("t_laporan", LINKS.laporan);
-  wire("t_data", LINKS.data);
-
+  function wire(id,url){ var a=document.getElementById(id);
+    if(url && url.indexOf("PASTE_")!==0 && url.indexOf("http")===0){ a.href=url; a.setAttribute("rel","noopener"); }
+    else{ a.classList.add("off"); a.addEventListener("click",function(e){ e.preventDefault(); toast("URL belum diatur"); }); } }
+  wire("c_col",LINKS.col); wire("c_rsol",LINKS.rsol); wire("c_crh",LINKS.crh); wire("c_rsrh",LINKS.rsrh);
   var tT; function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show");
     clearTimeout(tT); tT=setTimeout(function(){ t.classList.remove("show"); },2400); }
-
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
-  }
+  if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 </script>
 </body>
 </html>
