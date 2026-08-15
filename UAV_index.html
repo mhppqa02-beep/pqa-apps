@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0d47a1">
+<title>PQA UAV</title>
+<style>
+  :root{--biru:#0d47a1;--biru2:#1565c0;--mud:#e3f2fd;--line:#90caf9;--teks:#10233b;--bg:#f4f7fb;--merah:#c62828;--hijau:#2e7d32;--abu:#607d8b;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Roboto,"Segoe UI",sans-serif;background:var(--bg);color:var(--teks);font-size:16px}
+  button{cursor:pointer}
+  .hide{display:none!important}
+  header{position:sticky;top:0;z-index:20;background:var(--biru);color:#fff;padding:9px 14px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+  header h1{margin:0;font-size:16px} header .sub{font-size:12px;opacity:.9}
+  .statusbar{display:flex;align-items:center;gap:10px;margin-top:5px;font-size:12px;flex-wrap:wrap}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}.on{background:#69f0ae}.off{background:#ffca28}
+  .pill{background:rgba(255,255,255,.16);padding:3px 9px;border-radius:20px}.pill.warn{background:#f9a825;color:#3a2a00;font-weight:700}
+  .logout{margin-left:auto;background:rgba(255,255,255,.15);border:0;color:#fff;padding:6px 12px;border-radius:8px;font-size:12px}
+  main{max-width:920px;margin:0 auto;padding:12px 12px 120px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .card h2{margin:0 0 10px;font-size:15px;color:var(--biru);display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px;color:#274060}
+  input,select,textarea{width:100%;padding:11px;border:1.5px solid #c5d9ef;border-radius:10px;font-size:16px;background:#fff;color:var(--teks);-webkit-appearance:none}
+  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%231565c0' stroke-width='2' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--biru2);box-shadow:0 0 0 3px rgba(21,101,192,.15)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .hint{font-size:12px;color:#5a6b80;margin-top:4px}
+  .btn{border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:700}
+  .btn-main{background:var(--biru);color:#fff}.btn-sec{background:var(--mud);color:var(--biru2);border:1.5px solid var(--line)}
+  .addbtn{background:var(--mud);color:var(--biru2);border:1.5px dashed var(--line);border-radius:10px;padding:11px;width:100%;font-weight:700;font-size:14px;margin-top:8px}
+  .xbtn{background:#fde8e8;color:var(--merah);border:0;border-radius:8px;font-weight:700;padding:6px 10px}
+  .rowbtn{display:flex;gap:8px;align-items:end}.rowbtn .now{flex:0 0 auto;background:var(--mud);color:var(--biru2);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px}
+  .gpsread{font-size:12px;color:#5a6b80;margin-top:6px}
+  .pwwrap{position:relative}.pweye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:18px;padding:4px 6px;color:#5a6b80}
+  /* home */
+  .home-btn{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:18px 16px;margin-bottom:12px;font-size:18px;font-weight:800;color:var(--biru);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .home-btn small{display:block;font-weight:500;font-size:13px;color:#5a6b80;margin-top:3px}
+  .home-btn.dis{opacity:.45;cursor:not-allowed;border-style:dashed}
+  .backbtn{background:transparent;border:0;color:var(--biru);font-weight:700;font-size:14px;padding:6px 0;margin-bottom:4px}
+  /* prep chips */
+  .prep-item{border:1px solid #e3ecf7;border-radius:10px;padding:8px;margin-bottom:8px}
+  .prep-label{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#274060;margin-bottom:6px}
+  .prep-reset{background:#eef3f9;border:0;border-radius:8px;padding:3px 10px;font-size:12px;color:var(--abu);font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips label{display:inline-flex;align-items:center;margin:0}
+  .chips input{position:absolute;opacity:0;width:0;height:0}
+  .chips span{display:inline-block;padding:8px 12px;border:1.5px solid #c5d9ef;border-radius:20px;font-size:13px;font-weight:700;color:#41608a;background:#fff}
+  .chips input:checked+span{background:var(--biru);color:#fff;border-color:var(--biru)}
+  .chips .oth{display:inline-flex;align-items:center;gap:4px;border:1.5px solid #c5d9ef;border-radius:20px;padding:2px 6px 2px 4px}
+  .chips .oth input[type=radio]:checked~*{}
+  .oth-text{width:120px;padding:6px 8px;border:0;font-size:13px}
+  /* flight card */
+  .flightcard{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#fbfdff}
+  .fhead{font-weight:800;color:var(--biru);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  .sub2{font-size:11px;color:#5a6b80;font-weight:700;margin:6px 0 2px}
+  /* heights grid */
+  .hgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .hcell label{margin:0 0 2px;font-size:11px;text-align:center}
+  .hcell input{padding:8px 4px;text-align:center;font-size:14px}
+  .actions{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;max-width:920px;margin:0 auto;box-shadow:0 -2px 10px rgba(0,0,0,.08);z-index:18}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:#263238;color:#fff;padding:11px 18px;border-radius:24px;font-size:14px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}.toast.show{opacity:1}
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#0d47a1,#1565c0)}
+  .login-card{background:#fff;border-radius:18px;padding:26px 22px;width:100%;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .login-card h1{margin:0 0 2px;font-size:20px;color:var(--biru)}.login-card p{margin:0 0 18px;font-size:13px;color:#5a6b80}
+  .err{background:#fdecea;color:var(--merah);border-radius:10px;padding:10px;font-size:13px;margin-top:12px}
+  .queue-item{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:8px 0;border-bottom:1px solid #eef3f9}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;background:#fff3e0;color:#e65100}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <h1>PQA UAV</h1><p>Silakan login untuk masuk.</p>
+    <label>Username</label><input id="lgUser" autocomplete="username" autocapitalize="none">
+    <label>Password</label>
+    <div class="pwwrap"><input id="lgPass" type="password" autocomplete="current-password"><button type="button" class="pweye" id="pwEye" onclick="togglePw()">👁</button></div>
+    <button class="btn btn-main" id="lgBtn" style="width:100%;margin-top:16px" onclick="doLogin()">Masuk</button>
+    <div id="lgErr" class="err hide"></div>
+    <div class="hint" style="margin-top:14px">Butuh internet hanya saat login. Setelah itu bisa dipakai offline.</div>
+  </div>
+</div>
+
+<div id="appView" class="hide">
+  <header>
+    <h1>PQA UAV <span style="opacity:.7;font-size:12px">· v1</span></h1>
+    <div class="sub" id="hdrUser">—</div>
+    <div class="statusbar">
+      <span id="netStat"><span class="dot off"></span>Offline</span>
+      <span class="pill" id="pendPill">0 belum terkirim</span>
+      <button class="logout" onclick="doLogout()">Keluar</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <div id="viewHome">
+      <button class="home-btn" onclick="showView('aku')">Akuisisi<small>Tally sheet acquisition + flight log (offline)</small></button>
+      <button class="home-btn dis" disabled>Validasi<small>Belum tersedia</small></button>
+      <button class="home-btn" onclick="showView('perb')">Perbandingan<small>Perbandingan tinggi + koordinat</small></button>
+      <div class="card">
+        <h2>✓ Data belum terkirim</h2>
+        <button class="addbtn" style="margin-top:0" onclick="flushOutbox(true)">⬆ Kirim data tertunda</button>
+        <div id="queueList"><div class="hint">Belum ada data tertunda.</div></div>
+      </div>
+    </div>
+
+    <!-- AKUISISI -->
+    <div id="viewAku" class="hide">
+      <button class="backbtn" onclick="showView('home')">← Home</button>
+      <div class="card">
+        <h2>Informasi Dasar</h2>
+        <div class="grid2">
+          <div><label>Wilayah</label><select id="aku_wil" onchange="onWil('aku')"><option value="">—</option></select></div>
+          <div><label>Unit</label><select id="aku_unit" onchange="onUnit('aku')"><option value="">—</option></select></div>
+        </div>
+        <div class="grid2">
+          <div><label>Blok</label><select id="aku_blok"><option value="">—</option></select></div>
+          <div><label>Compt</label><input id="aku_compt"></div>
+        </div>
+        <div class="grid2">
+          <div><label>Stand</label><input id="aku_stand"></div>
+          <div><label>Luas (Ha)</label><input id="aku_luas" inputmode="decimal"></div>
+        </div>
+        <div class="grid2">
+          <div><label>Umur (Bulan)</label><input id="aku_umur" inputmode="numeric"></div>
+          <div><label>Spesies</label><input id="aku_spesies"></div>
+        </div>
+        <div class="grid2">
+          <div><label>Jenis Bibit</label><input id="aku_bibit"></div>
+          <div><label>UAV ID</label><input id="aku_uavid"></div>
+        </div>
+        <label>Tanggal Akuisisi</label><input id="aku_tgl" type="date">
+      </div>
+
+      <div class="card">
+        <h2>Flight Preparation</h2>
+        <div class="hint">Pilih salah satu tiap baris. "Others" bisa diisi teks. Tombol ↺ = reset baris.</div>
+        <div id="prepWrap" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Flight Log</h2>
+        <div id="flightWrap"></div>
+        <button class="addbtn" onclick="addFlights(5)">+ Tambah 5 baris</button>
+      </div>
+
+      <div class="card"><h2>Keterangan</h2><textarea id="aku_ket" rows="2"></textarea></div>
+
+      <div class="card">
+        <h2>Petugas</h2>
+        <label>PQA SV</label><select id="aku_sv"><option value="">—</option></select>
+        <label>Assessor (3)</label>
+        <div class="grid3"><select id="aku_as1"><option value="">—</option></select><select id="aku_as2"><option value="">—</option></select><select id="aku_as3"><option value="">—</option></select></div>
+      </div>
+    </div>
+
+    <!-- PERBANDINGAN -->
+    <div id="viewPerb" class="hide">
+      <button class="backbtn" onclick="showView('home')">← Home</button>
+      <div class="card">
+        <h2>Informasi Dasar</h2>
+        <label>Jenis Audit / Umur (Bulan)</label><input id="perb_umur">
+        <div class="grid2">
+          <div><label>Wilayah</label><select id="perb_wil" onchange="onWil('perb')"><option value="">—</option></select></div>
+          <div><label>Unit</label><select id="perb_unit" onchange="onUnit('perb')"><option value="">—</option></select></div>
+        </div>
+        <div class="grid2">
+          <div><label>Blok</label><select id="perb_blok"><option value="">—</option></select></div>
+          <div><label>Comp / Stand</label><input id="perb_stand"></div>
+        </div>
+        <div class="grid2">
+          <div><label>Luas (Ha)</label><input id="perb_luas" inputmode="decimal"></div>
+          <div><label>Species</label><input id="perb_species"></div>
+        </div>
+        <div class="grid2">
+          <div><label>No Strip</label><input id="perb_nostrip"></div>
+          <div><label>Tanggal Audit</label><input id="perb_tgl" type="date"></div>
+        </div>
+        <div class="grid2">
+          <div><label>Halaman</label><input id="perb_halaman" inputmode="numeric"></div>
+          <div><label>dari</label><input id="perb_dari" inputmode="numeric"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Tinggi — Baris 1 (1–16)</h2>
+        <div class="hgrid" id="b1grid"></div>
+      </div>
+      <div class="card">
+        <h2>Tinggi — Baris 2 (1–16)</h2>
+        <div class="hgrid" id="b2grid"></div>
+      </div>
+
+      <div class="card">
+        <h2>Koordinat (No.1 &amp; No.16)</h2>
+        <div class="sub2">Titik awal (No.1)</div>
+        <div class="grid2"><div><label>X (DD)</label><input id="perb_sx" inputmode="decimal" oninput="recompCoord('perb_s')"></div><div><label>Y (DD)</label><input id="perb_sy" inputmode="decimal" oninput="recompCoord('perb_s')"></div></div>
+        <button class="now" style="margin-top:6px" onclick="gpsFill('perb_s')">📍 GPS</button>
+        <div class="gpsread" id="perb_s_read">—</div>
+        <input type="hidden" id="perb_s_e"><input type="hidden" id="perb_s_n"><input type="hidden" id="perb_s_z">
+        <div class="sub2" style="margin-top:10px">Titik akhir (No.16)</div>
+        <div class="grid2"><div><label>X (DD)</label><input id="perb_ex" inputmode="decimal" oninput="recompCoord('perb_e')"></div><div><label>Y (DD)</label><input id="perb_ey" inputmode="decimal" oninput="recompCoord('perb_e')"></div></div>
+        <button class="now" style="margin-top:6px" onclick="gpsFill('perb_e')">📍 GPS</button>
+        <div class="gpsread" id="perb_e_read">—</div>
+        <input type="hidden" id="perb_e_e"><input type="hidden" id="perb_e_n"><input type="hidden" id="perb_e_z">
+      </div>
+
+      <div class="card"><h2>Keterangan</h2><textarea id="perb_ket" rows="2"></textarea></div>
+
+      <div class="card">
+        <h2>Petugas</h2>
+        <label>PQA SV</label><select id="perb_sv"><option value="">—</option></select>
+        <label>Assessor (3)</label>
+        <div class="grid3"><select id="perb_as1"><option value="">—</option></select><select id="perb_as2"><option value="">—</option></select><select id="perb_as3"><option value="">—</option></select></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="actions" id="akuActions">
+    <button class="btn btn-sec" style="flex:0 0 auto" onclick="clearAku()">Bersihkan</button>
+    <button class="btn btn-main" style="flex:1" onclick="submitAku()">Simpan &amp; Kirim</button>
+  </div>
+  <div class="actions hide" id="perbActions">
+    <button class="btn btn-sec" style="flex:0 0 auto" onclick="clearPerb()">Bersihkan</button>
+    <button class="btn btn-main" style="flex:1" onclick="submitPerb()">Simpan &amp; Kirim</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+var GAS_URL = "PASTE_URL_HERE";
+var GAS_INJECTED = "<?= EXEC_URL ?>";
+if (GAS_INJECTED.indexOf('http')===0) GAS_URL = GAS_INJECTED;
+var K_TOKEN='pqa_uav_token',K_MASTERS='pqa_uav_masters',K_OUTBOX='pqa_uav_outbox1';
+var MASTERS={wilayah:[],byWil:{},wilNama:{}};
+
+var CONN=['1. Aman','2. Minor Accident','3. Major Accident'];
+var WX=['1. Cerah','2. Berawan','3. Mendung','4. Berkabut','5. Hujan/Rintik','6. Berangin'];
+var BAT=['1','2','3','4','5','6'];
+var PREP=[
+ ['statusRTH','Status RTH',['On','Off'],false],
+ ['altitudeRTH','Altitude RTH',['100m','50m'],true],
+ ['flightAltitude','Flight Altitude',['100m','50m'],true],
+ ['gimbalLock','Gimbal Lock',['On','Off'],false],
+ ['gimbalAngel','Gimbal Angel',['80-90°','40-60°'],false],
+ ['bodyCheck','Body Check',['Normal','Damaged'],false],
+ ['flightMode','Flight Mode',['Normal','Cinematic','Sport'],false],
+ ['resolution','Resolution',['FHD','4K'],true],
+ ['subtitle','Subtitle',['On','Off'],false],
+ ['gridlines','Gridlines',['On','Off'],false],
+ ['batteryCycle','Battery Cycle',['Battery1','Battery2','Battery3'],false],
+ ['voltage','Voltage',['Battery1','Battery2','Battery3'],false],
+ ['obstacleAvoidance','Obstacle Avoidance Action',['Brake','Bypass','Off'],false],
+ ['satelliteCount','Satellite Count (Strength)',['>15','15-10','<10'],false],
+ ['safetySignalLoss','Safety Behavior on Signal Loss',['Hover','RTH','Descend'],false]
+];
+
+/* Wilayah → Unit → Block */
+var WBU = {
+  '1':{'UNIT 1 MARTAPURA':['Sungai Tuha','Sungai Langit'],'UNIT 2 MERBAU':['Merbau 1','Merbau 2','Merbau 3'],
+    'UNIT 3 GEMAWANG':['Banding Anyar','Subanjeriji','Toman 1','Toman 2','Toman 3'],
+    'UNIT 4 CABAN':['Caban Utara','Caban Selatan','Sodong Utara','Sodong Timur'],
+    'UNIT 5 SODONG':['Sodong Barat','Sodong Selatan','Niru','Lengi']},
+  '2':{'UNIT 6 LUBUK GUCI':['Lubuk Guci','Baung Selatan'],'UNIT 7 BAUNG UTARA':['Baung Utara','Suban Ulu'],
+    'UNIT 8 TEBING INDAH':['Tebing Indah 1','Tebing Indah 2','Ipuh','Teras'],
+    'UNIT 9 SEMANGUS':['Deras','Cawang','Selibing'],
+    'UNIT 11 SIALANG':['Bukit Kulim','Sialang','Penyembangan','Medak']},
+  '3':{'UNIT 10 KERUH2':['Jene','Panglero','Keruh2'],
+    'UNIT 13 LANTINGAN':['Resam','Lantingan Barat','Lantingan Timur','Serdang Selatan','Serdang Utara'],
+    'UNIT 14 SERAI':['Serai','Ibul','Lagan'],'UNIT 15 KERUH1':['Keruh1','Koneng','Jernih','Subat']}
+};
+function wilNum(w){ return String(w||'').replace(/[^0-9]/g,''); }
+function unitsOf(w){ var m=WBU[wilNum(w)]; return m?Object.keys(m):[]; }
+function blocksOf(w,u){ var m=WBU[wilNum(w)]; if(!m||!u)return []; if(m[u])return m[u];
+  var k=String(u).toUpperCase().replace(/\s+/g,' ').trim(); for(var x in m){ if(x.toUpperCase().replace(/\s+/g,' ').trim()===k) return m[x]; } return []; }
+
+/* DD → UTM (WGS84) */
+function utmLetter(lat){ if(lat<-80||lat>84) return 'Z'; return 'CDEFGHJKLMNPQRSTUVWX'.charAt(Math.floor((lat+80)/8)); }
+function llToUTM(lat,lon){ var a=6378137.0,f=1/298.257223563,e2=f*(2-f),k0=0.9996,rad=Math.PI/180;
+  var zone=Math.floor((lon+180)/6)+1, lon0=((zone-1)*6-180+3)*rad, latR=lat*rad, lonR=lon*rad;
+  var N=a/Math.sqrt(1-e2*Math.sin(latR)*Math.sin(latR)), T=Math.tan(latR)*Math.tan(latR);
+  var ep2=e2/(1-e2), C=ep2*Math.cos(latR)*Math.cos(latR), A=Math.cos(latR)*(lonR-lon0);
+  var M=a*((1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)*latR-(3*e2/8+3*e2*e2/32+45*e2*e2*e2/1024)*Math.sin(2*latR)+(15*e2*e2/256+45*e2*e2*e2/1024)*Math.sin(4*latR)-(35*e2*e2*e2/3072)*Math.sin(6*latR));
+  var E=k0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T+72*C-58*ep2)*Math.pow(A,5)/120)+500000;
+  var Nn=k0*(M+N*Math.tan(latR)*(A*A/2+(5-T+9*C+4*C*C)*Math.pow(A,4)/24+(61-58*T+T*T+600*C-330*ep2)*Math.pow(A,6)/720));
+  if(lat<0) Nn+=10000000;
+  return { e:Math.round(E), n:Math.round(Nn), z:zone+utmLetter(lat) }; }
+
+document.addEventListener('DOMContentLoaded',function(){
+  if('serviceWorker' in navigator && location.hostname.indexOf('script.google')<0){navigator.serviceWorker.register('sw.js').catch(function(){});}
+  renderPrep(); buildHeights(); addFlights(5);
+  var tok=localStorage.getItem(K_TOKEN);
+  if(tok){ loadMastersCache(); showApp(); } else { showLogin(); }
+  updateNet();
+  window.addEventListener('online',function(){ updateNet(); flushOutbox(); });
+  window.addEventListener('offline',updateNet);
+  setInterval(function(){ if(navigator.onLine) flushOutbox(); },20000);
+});
+
+/* ===== login ===== */
+function togglePw(){ var p=el('lgPass'); if(p.type==='password'){p.type='text';el('pwEye').textContent='🙈';}else{p.type='password';el('pwEye').textContent='👁';} }
+function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); }
+function showApp(){ el('loginView').classList.add('hide'); el('appView').classList.remove('hide');
+  el('hdrUser').textContent='Petugas: pqa'; applyMasters(); showView('home'); renderQueue();
+  if(navigator.onLine){ refreshMasters(); flushOutbox(); } }
+function doLogin(){ var u=el('lgUser').value.trim(), pw=el('lgPass').value;
+  if(!u||!pw) return loginErr('Isi username dan password.');
+  if(!navigator.onLine) return loginErr('Login butuh internet.');
+  loginErr(''); var b=el('lgBtn'); b.disabled=true; b.textContent='Memproses…';
+  post({action:'login',username:u,password:pw}).then(function(r){
+    if(r&&r.ok){ localStorage.setItem(K_TOKEN,r.token); if(r.masters){ MASTERS=r.masters; localStorage.setItem(K_MASTERS,JSON.stringify(r.masters)); } showApp(); }
+    else loginErr(r&&r.error==='invalid'?'Username / password salah.':'Gagal login.');
+  }).catch(function(){ loginErr('Tidak bisa terhubung ke server.'); }).then(function(){ b.disabled=false; b.textContent='Masuk'; }); }
+function loginErr(m){ var e=el('lgErr'); if(!m){e.classList.add('hide');return;} e.textContent=m; e.classList.remove('hide'); }
+function doLogout(){ if(outbox().length>0 && !confirm('Masih ada data belum terkirim. Tetap keluar?')) return; localStorage.removeItem(K_TOKEN); showLogin(); }
+function refreshMasters(){ var tok=localStorage.getItem(K_TOKEN); if(!tok||GAS_URL.indexOf('PASTE')===0) return;
+  post({action:'masters',token:tok}).then(function(r){ if(r&&r.ok&&r.masters){ MASTERS=r.masters; localStorage.setItem(K_MASTERS,JSON.stringify(r.masters)); applyMasters(); } }).catch(function(){}); }
+function loadMastersCache(){ try{ var m=JSON.parse(localStorage.getItem(K_MASTERS)||'null'); if(m) MASTERS=m; }catch(e){} }
+
+/* ===== views ===== */
+function showView(v){ ['Home','Aku','Perb'].forEach(function(x){ el('view'+x).classList.add('hide'); });
+  el('akuActions').classList.add('hide'); el('perbActions').classList.add('hide');
+  if(v==='home'){ el('viewHome').classList.remove('hide'); renderQueue(); }
+  else if(v==='aku'){ el('viewAku').classList.remove('hide'); el('akuActions').classList.remove('hide'); }
+  else if(v==='perb'){ el('viewPerb').classList.remove('hide'); el('perbActions').classList.remove('hide'); }
+  window.scrollTo(0,0); }
+
+/* ===== masters ===== */
+function fillSel(id,arr,keep){ var s=el(id); if(!s)return; var cur=keep?s.value:''; s.innerHTML='<option value="">—</option>';
+  (arr||[]).forEach(function(v){ var o=document.createElement('option'); o.value=v;o.textContent=v;s.appendChild(o); }); if(cur)s.value=cur; }
+function applyMasters(){ ['aku','perb'].forEach(function(pfx){ fillSel(pfx+'_wil',MASTERS.wilayah,true); onWil(pfx,true); }); }
+function onWil(pfx,keep){ var w=el(pfx+'_wil').value, g=(MASTERS.byWil&&MASTERS.byWil[wilNum(w)])||{staff:[],sv:[]};
+  fillSel(pfx+'_unit',unitsOf(w),keep); onUnit(pfx,keep);
+  fillSel(pfx+'_sv',g.sv,keep); fillSel(pfx+'_as1',g.staff,keep); fillSel(pfx+'_as2',g.staff,keep); fillSel(pfx+'_as3',g.staff,keep); }
+function onUnit(pfx,keep){ fillSel(pfx+'_blok',blocksOf(el(pfx+'_wil').value, el(pfx+'_unit').value),keep); }
+
+/* ===== Flight Preparation ===== */
+function renderPrep(){ var w=el('prepWrap'); w.innerHTML='';
+  PREP.forEach(function(it){ var key=it[0], name=it[1], opts=it[2], oth=it[3];
+    var h='<div class="prep-item" data-key="'+key+'"><div class="prep-label"><span>'+name+'</span><button type="button" class="prep-reset" onclick="resetPrep(\''+key+'\')">↺ reset</button></div><div class="chips">';
+    opts.forEach(function(o){ h+='<label><input type="radio" name="prep_'+key+'" value="'+o+'"><span>'+o+'</span></label>'; });
+    if(oth){ h+='<span class="oth"><input type="radio" name="prep_'+key+'" value="__oth__" id="pr_'+key+'_oth"><input type="text" class="oth-text" placeholder="Others" oninput="if(this.value){document.getElementById(\'pr_'+key+'_oth\').checked=true;}"></span>'; }
+    h+='</div></div>'; w.insertAdjacentHTML('beforeend',h);
+  }); }
+function resetPrep(key){ document.querySelectorAll('input[name="prep_'+key+'"]').forEach(function(r){ r.checked=false; });
+  var item=document.querySelector('.prep-item[data-key="'+key+'"]'); var ot=item.querySelector('.oth-text'); if(ot) ot.value=''; }
+function collectPrep(){ var o={}; PREP.forEach(function(it){ var key=it[0];
+  var chk=document.querySelector('input[name="prep_'+key+'"]:checked'); if(!chk){ o[key]=''; return; }
+  if(chk.value==='__oth__'){ var item=document.querySelector('.prep-item[data-key="'+key+'"]'); o[key]=(item.querySelector('.oth-text').value||'').trim(); }
+  else o[key]=chk.value; }); return o; }
+function fillPrep(p){ p=p||{}; PREP.forEach(function(it){ var key=it[0], v=p[key]||''; resetPrep(key);
+  if(!v) return; var r=document.querySelector('input[name="prep_'+key+'"][value="'+v+'"]');
+  if(r){ r.checked=true; } else if(it[3]){ var item=document.querySelector('.prep-item[data-key="'+key+'"]'); item.querySelector('.oth-text').value=v; item.querySelector('#pr_'+key+'_oth').checked=true; } }); }
+
+/* ===== Flight Log ===== */
+function optHtml(arr,ph){ var s='<option value="">'+(ph||'—')+'</option>'; arr.forEach(function(v){ s+='<option>'+v+'</option>'; }); return s; }
+function addFlights(n){ var wrap=el('flightWrap'), start=wrap.querySelectorAll('.flightcard').length;
+  for(var i=0;i<n;i++){ var idx=start+i+1; var c=document.createElement('div'); c.className='flightcard';
+    c.innerHTML=
+     '<div class="fhead"><span>Flight '+idx+'</span><button class="xbtn fdel">× hapus</button></div>'+
+     '<label>Record Flight Name</label><input class="fname">'+
+     '<div class="grid2"><div><label>Take Off Time</label><div class="rowbtn"><input class="ftakeoff" type="time"><button class="now fnowT">⏱</button></div></div>'+
+       '<div><label>Landing Time</label><div class="rowbtn"><input class="flanding" type="time"><button class="now fnowL">⏱</button></div></div></div>'+
+     '<div class="grid2"><div><label>Duration</label><input class="fdur" readonly placeholder="otomatis"></div><div><label>Distance (m)</label><input class="fdist" inputmode="decimal"></div></div>'+
+     '<div class="sub2">Battery</div><div class="grid3"><div><label>Take Off %</label><input class="fbatTO" inputmode="numeric"></div><div><label>Landing %</label><input class="fbatLD" inputmode="numeric"></div><div><label>ID Battery</label><select class="fidbat">'+optHtml(BAT)+'</select></div></div>'+
+     '<div class="sub2">Coordinate (X=Bujur/Lon, Y=Lintang/Lat)</div><div class="grid2"><div><label>X (DD)</label><input class="fx" inputmode="decimal"></div><div><label>Y (DD)</label><input class="fy" inputmode="decimal"></div></div>'+
+     '<button class="now fgps" style="margin-top:6px">📍 GPS</button><div class="gpsread fcoordread">—</div>'+
+     '<input type="hidden" class="fe"><input type="hidden" class="fn"><input type="hidden" class="fz">'+
+     '<div class="sub2">Connection Remote Drone</div><div class="grid2"><div><label>Mission</label><select class="fconnM">'+optHtml(CONN)+'</select></div><div><label>Landing</label><select class="fconnL">'+optHtml(CONN)+'</select></div></div>'+
+     '<div class="sub2">Weather</div><div class="grid3"><div><label>Take-off</label><select class="fwxT">'+optHtml(WX)+'</select></div><div><label>Mission</label><select class="fwxM">'+optHtml(WX)+'</select></div><div><label>Landing</label><select class="fwxL">'+optHtml(WX)+'</select></div></div>'+
+     '<div class="sub2">UAV Condition</div><div class="grid2"><div><label>Take Off</label><select class="fuavT">'+optHtml(CONN)+'</select></div><div><label>Landing</label><select class="fuavL">'+optHtml(CONN)+'</select></div></div>'+
+     '<label>Remarks</label><input class="fremarks">';
+    wrap.appendChild(c);
+    c.querySelector('.fdel').onclick=function(){ c.remove(); renumberFlights(); };
+    c.querySelector('.fnowT').onclick=function(){ c.querySelector('.ftakeoff').value=nowHM(); calcDur(c); };
+    c.querySelector('.fnowL').onclick=function(){ c.querySelector('.flanding').value=nowHM(); calcDur(c); };
+    c.querySelector('.ftakeoff').addEventListener('input',function(){ calcDur(c); });
+    c.querySelector('.flanding').addEventListener('input',function(){ calcDur(c); });
+    c.querySelector('.fx').addEventListener('input',function(){ recompFlightCoord(c); });
+    c.querySelector('.fy').addEventListener('input',function(){ recompFlightCoord(c); });
+    c.querySelector('.fgps').onclick=function(){ gpsFlight(c); };
+  } }
+function renumberFlights(){ el('flightWrap').querySelectorAll('.flightcard').forEach(function(c,i){ c.querySelector('.fhead span').textContent='Flight '+(i+1); }); }
+function calcDur(c){ var to=c.querySelector('.ftakeoff').value, ld=c.querySelector('.flanding').value; c.querySelector('.fdur').value=durStr(to,ld); }
+function recompFlightCoord(c){ var x=c.querySelector('.fx').value, y=c.querySelector('.fy').value;
+  if(x===''||y===''){ c.querySelector('.fcoordread').textContent='—'; c.querySelector('.fe').value='';c.querySelector('.fn').value='';c.querySelector('.fz').value=''; return; }
+  var u=llToUTM(numv(y),numv(x)); c.querySelector('.fe').value=u.e;c.querySelector('.fn').value=u.n;c.querySelector('.fz').value=u.z;
+  c.querySelector('.fcoordread').textContent='UTM '+u.z+' '+u.e+' '+u.n+' · DD '+y+', '+x; }
+function gpsFlight(c){ if(!navigator.geolocation) return toast('GPS tidak didukung.'); toast('Mengambil lokasi…');
+  navigator.geolocation.getCurrentPosition(function(p){ var lat=p.coords.latitude.toFixed(6), lon=p.coords.longitude.toFixed(6);
+    c.querySelector('.fx').value=lon; c.querySelector('.fy').value=lat; recompFlightCoord(c); toast('Lokasi terisi ✓'); },
+    function(err){ toast('Gagal: '+(err.code===1?'izin ditolak':'coba di area terbuka')); }, {enableHighAccuracy:true,timeout:10000,maximumAge:0}); }
+function collectFlights(){ var out=[];
+  el('flightWrap').querySelectorAll('.flightcard').forEach(function(c,i){
+    var g=function(cl){ return c.querySelector('.'+cl).value; };
+    var f={ no:i+1, name:g('fname').trim(), takeoff:g('ftakeoff'), landing:g('flanding'), duration:g('fdur'), distance:g('fdist'),
+      batTO:g('fbatTO'), batLD:g('fbatLD'), idBattery:g('fidbat'),
+      coord:{ x:g('fx'), y:g('fy'), e:g('fe'), n:g('fn'), z:g('fz') },
+      connMission:g('fconnM'), connLanding:g('fconnL'), wxTakeoff:g('fwxT'), wxMission:g('fwxM'), wxLanding:g('fwxL'),
+      uavTO:g('fuavT'), uavLD:g('fuavL'), remarks:g('fremarks').trim() };
+    var any=f.name||f.takeoff||f.landing||f.distance||f.batTO||f.batLD||f.idBattery||f.coord.x||f.coord.y||f.connMission||f.connLanding||f.wxTakeoff||f.wxMission||f.wxLanding||f.uavTO||f.uavLD||f.remarks;
+    if(any) out.push(f);
+  }); return out; }
+
+/* ===== Perbandingan heights & coords ===== */
+function buildHeights(){ ['b1','b2'].forEach(function(b){ var g=el(b+'grid'); g.innerHTML='';
+  for(var i=1;i<=16;i++){ var d=document.createElement('div'); d.className='hcell'; d.innerHTML='<label>'+i+'</label><input id="'+b+'_'+i+'" inputmode="decimal">'; g.appendChild(d); } }); }
+function recompCoord(pfx){ var x=el(pfx+'x').value, y=el(pfx+'y').value;
+  if(x===''||y===''){ el(pfx+'_read').textContent='—'; el(pfx+'_e').value='';el(pfx+'_n').value='';el(pfx+'_z').value=''; return; }
+  var u=llToUTM(numv(y),numv(x)); el(pfx+'_e').value=u.e;el(pfx+'_n').value=u.n;el(pfx+'_z').value=u.z;
+  el(pfx+'_read').textContent='UTM '+u.z+' '+u.e+' '+u.n+' · DD '+y+', '+x; }
+function gpsFill(pfx){ if(!navigator.geolocation) return toast('GPS tidak didukung.'); toast('Mengambil lokasi…');
+  navigator.geolocation.getCurrentPosition(function(p){ el(pfx+'x').value=p.coords.longitude.toFixed(6); el(pfx+'y').value=p.coords.latitude.toFixed(6); recompCoord(pfx); toast('Lokasi terisi ✓'); },
+    function(err){ toast('Gagal: '+(err.code===1?'izin ditolak':'coba di area terbuka')); }, {enableHighAccuracy:true,timeout:10000,maximumAge:0}); }
+function coordObj(pfx){ return { x:el(pfx+'x').value, y:el(pfx+'y').value, e:el(pfx+'_e').value, n:el(pfx+'_n').value, z:el(pfx+'_z').value }; }
+
+/* ===== submit ===== */
+function collectAku(){ return { wilayah:el('aku_wil').value, unit:el('aku_unit').value, blok:el('aku_blok').value,
+  compt:el('aku_compt').value.trim(), stand:el('aku_stand').value.trim(), luas:el('aku_luas').value, umur:el('aku_umur').value,
+  spesies:el('aku_spesies').value.trim(), jenisBibit:el('aku_bibit').value.trim(), uavId:el('aku_uavid').value.trim(), tanggal:el('aku_tgl').value,
+  prep:collectPrep(), flights:collectFlights(), keterangan:el('aku_ket').value.trim(),
+  pqaSV:el('aku_sv').value, assessors:[el('aku_as1').value,el('aku_as2').value,el('aku_as3').value].filter(function(x){return x;}) }; }
+function submitAku(){ var d=collectAku();
+  if(!d.wilayah||!d.stand) return toast('Isi minimal Wilayah & Stand.');
+  d.clientId='u-'+Date.now()+'-'+Math.floor(Math.random()*1e5);
+  var q=outbox(); q.push({action:'akuisisi',payload:d,at:Date.now(),status:'wait',label:'Akuisisi · '+(d.stand||'?')}); setOutbox(q);
+  clearAku(false); renderQueue(); toast(navigator.onLine?'Tersimpan, mengirim…':'Tersimpan (offline).');
+  if(navigator.onLine) flushOutbox(); showView('home'); }
+function collectPerb(){ var b1=[],b2=[]; for(var i=1;i<=16;i++){ b1.push(el('b1_'+i).value); b2.push(el('b2_'+i).value); }
+  return { umur:el('perb_umur').value.trim(), wilayah:el('perb_wil').value, unit:el('perb_unit').value, blok:el('perb_blok').value,
+    stand:el('perb_stand').value.trim(), luas:el('perb_luas').value, species:el('perb_species').value.trim(),
+    noStrip:el('perb_nostrip').value.trim(), halaman:el('perb_halaman').value, dari:el('perb_dari').value, tanggal:el('perb_tgl').value,
+    baris1:b1, baris2:b2, start:coordObj('perb_s'), end:coordObj('perb_e'), keterangan:el('perb_ket').value.trim(),
+    pqaSV:el('perb_sv').value, assessors:[el('perb_as1').value,el('perb_as2').value,el('perb_as3').value].filter(function(x){return x;}) }; }
+function submitPerb(){ var d=collectPerb();
+  if(!d.wilayah||!d.stand) return toast('Isi minimal Wilayah & Comp/Stand.');
+  d.clientId='p-'+Date.now()+'-'+Math.floor(Math.random()*1e5);
+  var q=outbox(); q.push({action:'perbandingan',payload:d,at:Date.now(),status:'wait',label:'Perbandingan · '+(d.stand||'?')}); setOutbox(q);
+  clearPerb(false); renderQueue(); toast(navigator.onLine?'Tersimpan, mengirim…':'Tersimpan (offline).');
+  if(navigator.onLine) flushOutbox(); showView('home'); }
+function clearAku(ask){ if(ask && !confirm('Bersihkan isian Akuisisi?')) return;
+  ['aku_compt','aku_stand','aku_luas','aku_umur','aku_spesies','aku_bibit','aku_uavid','aku_tgl','aku_ket'].forEach(function(id){ el(id).value=''; });
+  ['aku_unit','aku_blok','aku_sv','aku_as1','aku_as2','aku_as3'].forEach(function(id){ el(id).value=''; });
+  PREP.forEach(function(it){ resetPrep(it[0]); }); el('flightWrap').innerHTML=''; addFlights(5); }
+function clearPerb(ask){ if(ask && !confirm('Bersihkan isian Perbandingan?')) return;
+  ['perb_umur','perb_stand','perb_luas','perb_species','perb_nostrip','perb_halaman','perb_dari','perb_tgl','perb_ket'].forEach(function(id){ el(id).value=''; });
+  ['perb_unit','perb_blok','perb_sv','perb_as1','perb_as2','perb_as3'].forEach(function(id){ el(id).value=''; });
+  for(var i=1;i<=16;i++){ el('b1_'+i).value=''; el('b2_'+i).value=''; }
+  ['perb_s','perb_e'].forEach(function(p){ el(p+'x').value='';el(p+'y').value='';el(p+'_e').value='';el(p+'_n').value='';el(p+'_z').value=''; el(p+'_read').textContent='—'; }); }
+
+/* ===== outbox ===== */
+function outbox(){ try{ return JSON.parse(localStorage.getItem(K_OUTBOX)||'[]'); }catch(e){ return []; } }
+function setOutbox(a){ localStorage.setItem(K_OUTBOX,JSON.stringify(a)); }
+var flushing=false;
+function flushOutbox(manual){ var q=outbox();
+  if(!navigator.onLine){ if(manual) toast('Masih offline.'); return; }
+  if(!q.length){ if(manual) toast('Tidak ada data tertunda.'); return; }
+  if(flushing) return; var tok=localStorage.getItem(K_TOKEN); if(!tok){ if(manual) toast('Login dulu.'); return; }
+  if(GAS_URL.indexOf('PASTE')===0){ if(manual) toast('GAS_URL belum di-set.'); return; }
+  flushing=true; if(manual) toast('Mengirim…');
+  var pend=q.filter(function(x){return x.status!=='ok';}), chain=Promise.resolve();
+  pend.forEach(function(it){ chain=chain.then(function(){ return post({action:it.action,token:tok,payload:it.payload}).then(function(r){ if(r&&r.ok) it.status='ok'; else if(r&&r.error==='unauthorized') it.status='auth'; }).catch(function(){}); }); });
+  chain.then(function(){ var keep=outbox().map(function(x){ var m=pend.filter(function(p){return p.payload.clientId===x.payload.clientId;})[0]; return m||x; }).filter(function(x){return x.status!=='ok';});
+    setOutbox(keep); renderQueue(); flushing=false;
+    if(pend.some(function(p){return p.status==='auth';})) toast('Sesi berakhir. Login ulang.'); else if(pend.some(function(p){return p.status==='ok';})) toast('Terkirim ✓'); }); }
+function renderQueue(){ var q=outbox(), w=el('queueList'); if(!w) return;
+  el('pendPill').textContent=q.length+' belum terkirim'; el('pendPill').className='pill'+(q.length?' warn':'');
+  if(!q.length){ w.innerHTML='<div class="hint">Belum ada data tertunda.</div>'; return; }
+  w.innerHTML=q.map(function(x){ return '<div class="queue-item"><span>'+(x.label||x.action)+'</span><span class="badge">'+(x.status==='auth'?'login ulang':'menunggu')+'</span></div>'; }).join(''); }
+
+/* ===== util ===== */
+function updateNet(){ el('netStat').innerHTML=navigator.onLine?'<span class="dot on"></span>Online':'<span class="dot off"></span>Offline'; }
+function post(o){ return fetch(GAS_URL,{method:'POST',body:JSON.stringify(o),redirect:'follow'}).then(function(r){return r.json();}); }
+function el(id){ return document.getElementById(id); }
+function numv(v){ var x=parseFloat(String(v).replace(',','.')); return isFinite(x)?x:0; }
+function nowHM(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function durStr(to,ld){ if(!to||!ld) return ''; var a=to.split(':'),b=ld.split(':'); if(a.length<2||b.length<2) return '';
+  var m=(parseInt(b[0],10)*60+parseInt(b[1],10))-(parseInt(a[0],10)*60+parseInt(a[1],10)); if(isNaN(m)) return ''; if(m<0) m+=1440;
+  return Math.floor(m/60)+'j '+(m%60)+'m'; }
+var tT; function toast(m){ var t=el('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('show');},2600); }
+</script>
+</body>
+</html>
