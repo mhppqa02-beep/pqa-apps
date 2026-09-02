@@ -87,6 +87,14 @@
   .login-card h1{margin:0 0 2px;font-size:20px;color:var(--hijau)}.login-card p{margin:0 0 18px;font-size:13px;color:#5a6b5c}
   .err{background:#fdecea;color:var(--merah);border-radius:10px;padding:10px;font-size:13px;margin-top:12px}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:#263238;color:#fff;padding:11px 18px;border-radius:24px;font-size:14px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}.toast.show{opacity:1}
+  .pil-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:calc(100vh - 160px)}
+  .pil-tbl{border-collapse:collapse;width:100%;white-space:nowrap;font-size:14px}
+  .pil-tbl thead th{position:sticky;top:0;background:var(--hijau);color:#fff;padding:10px;text-align:left;font-size:12px}
+  .pil-tbl tbody td{padding:11px 10px;border-bottom:1px solid #eef3ef}
+  .pil-tbl tbody tr.sel{background:var(--kuning)}
+  .pil-tbl .num{text-align:right}
+  .pil-tbl .pilck{width:22px;height:22px}
+  .empty{padding:22px;text-align:center;color:#5a6b80}
 </style>
 </head>
 <body>
@@ -106,14 +114,40 @@
   </div>
 </div>
 
+<div id="pilihanView" class="hide">
+  <header>
+    <h1>Daftar Stand (RKM) <span style="opacity:.7;font-size:12px">· Conventional</span></h1>
+    <div class="sub" id="pilUser">—</div>
+    <div class="statusbar">
+      <span id="pilNet"><span class="dot off"></span>Offline</span>
+      <button class="logout" onclick="startManual()" style="margin-left:auto">✏ Input manual</button>
+      <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
+    </div>
+  </header>
+  <main style="padding-bottom:96px">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="pil-wrap">
+        <table class="pil-tbl">
+          <thead><tr><th>✔</th><th>Umur</th><th>Unit</th><th>Block</th><th>Compt</th><th>Stand</th><th>Luas</th></tr></thead>
+          <tbody id="pilTb"><tr><td colspan="7" class="empty">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <div class="actions">
+    <button class="btn btn-main" id="pilOk" onclick="pickPilihan()">OK — Mulai audit Stand ini</button>
+  </div>
+</div>
+
 <div id="appView" class="hide">
   <header>
-    <h1>PQA Lapangan <span style="opacity:.7;font-size:12px">· v5.4</span></h1>
+    <h1>PQA Lapangan <span style="opacity:.7;font-size:12px">· v5.5</span></h1>
     <div class="sub" id="hdrUser">—</div>
     <div class="statusbar">
       <span id="netStat"><span class="dot off"></span>Offline</span>
       <span class="pill" id="pendPill">0 belum terkirim</span>
-      <button class="logout" onclick="softRefresh()" style="margin-left:auto">🔄 Segarkan</button>
+      <button class="logout" onclick="showPilihan()" style="margin-left:auto">← Daftar</button>
+      <button class="logout" onclick="softRefresh()" style="margin-left:8px">🔄 Segarkan</button>
       <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
     </div>
   </header>
@@ -313,7 +347,7 @@ document.addEventListener('DOMContentLoaded',function(){
   pw.addEventListener('input',function(e){ if(e.target.classList.contains('strip')){ recalc(); saveDraft(); } });
   var tok=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
   // 同日ならそのまま。日付が変わってもオフライン中はセッション維持（現場で締め出されないため）
-  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showApp(); } else { showLogin(); }
+  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showPilihan(); if(navigator.onLine) refreshMasters(); } else { showLogin(); }
   updateNet();
   window.addEventListener('online',function(){ updateNet(); flushOutbox(); });
   window.addEventListener('offline',updateNet);
@@ -326,9 +360,9 @@ function hasUnsaved(){ var f=false; try{ var o=JSON.parse(localStorage.getItem(K
 
 /*==================== LOGIN ====================*/
 function togglePw(){ var p=el('lgPass'); if(p.type==='password'){ p.type='text'; el('pwEye').textContent='🙈'; } else { p.type='password'; el('pwEye').textContent='👁'; } }
-function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); }
+function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); el('pilihanView').classList.add('hide'); }
 function showApp(){
-  el('loginView').classList.add('hide'); el('appView').classList.remove('hide');
+  el('loginView').classList.add('hide'); el('pilihanView').classList.add('hide'); el('appView').classList.remove('hide');
   var u=localStorage.getItem(K_USER)||''; el('hdrUser').textContent=u?('Petugas: '+u):'';
   applyMasters(); loadDraft(); applyPrefill(); renderQueue(); recalc(); refreshMasters();
   if(navigator.onLine) flushOutbox();   // ログイン直後に溜まったデータを送る
@@ -336,7 +370,7 @@ function showApp(){
 function refreshMasters(){
   var tok=localStorage.getItem(K_TOKEN);
   if(!tok||!navigator.onLine||GAS_URL.indexOf('PASTE_URL')===0) return;
-  post({action:'masters',token:tok}).then(function(r){ if(r&&r.ok&&r.masters){ MASTERS=r.masters; localStorage.setItem(K_MASTERS,JSON.stringify(r.masters)); applyMasters(); } }).catch(function(){});
+  post({action:'masters',token:tok}).then(function(r){ if(r&&r.ok){ if(r.masters){ MASTERS=r.masters; localStorage.setItem(K_MASTERS,JSON.stringify(r.masters)); applyMasters(); } storePilihanFromServer(r.pilihan); if(!el('pilihanView').classList.contains('hide')) renderPilihan(); } }).catch(function(){});
 }
 function doLogin(){
   var user=el('lgUser').value.trim(),pass=el('lgPass').value;
@@ -346,7 +380,8 @@ function doLogin(){
   post({action:'login',username:user,password:pass}).then(function(r){
     if(r&&r.ok){ localStorage.setItem(K_TOKEN,r.token); localStorage.setItem(K_USER,r.nama||user); localStorage.setItem(K_LOGIN_DATE,today());
       if(r.masters){ MASTERS=r.masters; localStorage.setItem(K_MASTERS,JSON.stringify(r.masters)); }
-      showApp(); if(r.wilayah){ setVal('wilayah',r.wilayah); onWilayah(); }
+      storePilihanFromServer(r.pilihan);
+      showPilihan();
     } else { loginErr(r&&r.error==='invalid'?'Username / password salah.':'Gagal login.'); }
   }).catch(function(){ loginErr('Tidak bisa terhubung ke server.'); }).then(function(){ btn.disabled=false; btn.textContent='Masuk'; });
 }
@@ -631,6 +666,49 @@ function applyPrefill(){
   toast('Data RKM dimuat ✓');
 }
 
+/*==================== RKM Pilihan（オフライン一覧） ====================*/
+var K_PILIHAN='pqa_sr_pilihan', K_CURKEY='pqa_sr_curkey';
+var IS_RS_APP=false;  // Conventionalアプリ=false（RSアプリでは true）
+function savePilihanLocal(list){ try{ localStorage.setItem(K_PILIHAN, JSON.stringify(list||[])); }catch(e){} }
+function loadPilihanLocal(){ try{ return JSON.parse(localStorage.getItem(K_PILIHAN)||'[]'); }catch(e){ return []; } }
+function storePilihanFromServer(pilihan){ if(pilihan && typeof pilihan.length==='number'){ savePilihanLocal(pilihan); } }
+function pilihanForThisApp(){ return loadPilihanLocal().filter(function(o){ return IS_RS_APP ? o.isRS : !o.isRS; }); }
+function removePilihanLocalByKey(key){ savePilihanLocal(loadPilihanLocal().filter(function(o){ return String(o.key)!==String(key); })); }
+function escP(v){ v=(v==null?'':String(v)); return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showPilihan(){
+  el('loginView').classList.add('hide'); el('appView').classList.add('hide'); el('pilihanView').classList.remove('hide');
+  var u=localStorage.getItem(K_USER)||''; el('pilUser').textContent=u?('Petugas: '+u):'';
+  el('pilNet').innerHTML=navigator.onLine?'<span class="dot on"></span>Online':'<span class="dot off"></span>Offline';
+  renderPilihan();
+}
+function renderPilihan(){
+  var list=pilihanForThisApp(), tb=el('pilTb');
+  if(!list.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Tugas hari ini selesai / belum ada data. Tekan "Input manual".</td></tr>'; el('pilOk').disabled=true; return; }
+  el('pilOk').disabled=false;
+  tb.innerHTML=list.map(function(o,i){
+    return '<tr data-i="'+i+'"><td><input type="radio" name="pilrad" class="pilck" data-i="'+i+'"></td>'+
+      '<td class="num">'+escP(o.umur)+'</td><td>'+escP(o.unit)+'</td><td>'+escP(o.blok)+'</td>'+
+      '<td>'+escP(o.compt)+'</td><td>'+escP(o.stand)+'</td><td class="num">'+escP(o.luas)+'</td></tr>';
+  }).join('');
+  tb.querySelectorAll('.pilck').forEach(function(c){ c.addEventListener('change',function(){
+    tb.querySelectorAll('tr').forEach(function(tr){ tr.classList.remove('sel'); });
+    if(c.checked) c.closest('tr').classList.add('sel');
+  }); });
+}
+function pickPilihan(){
+  var list=pilihanForThisApp(), sel=el('pilTb').querySelector('.pilck:checked');
+  if(!sel){ toast('Pilih 1 Stand dulu.'); return; }
+  var o=list[+sel.getAttribute('data-i')]; if(!o) return;
+  clearForm(false);
+  setVal('tglAudit',o.tglRO||today()); setVal('umur',o.umur); setVal('wilayah',o.wil||'Lematang');
+  setVal('unit',o.unit); setVal('blok',o.blok); setVal('com',o.compt); setVal('stand',o.stand); setVal('luas',o.luas);
+  applyStaffFor(el('wilayah').value,true); onUmur();
+  localStorage.setItem(K_CURKEY, o.key||''); saveDraftNow();
+  showApp(); toast('Stand '+o.stand+' dimuat ✓');
+}
+function startManual(){ localStorage.removeItem(K_CURKEY); clearForm(false); showApp(); toast('Mode input manual.'); }
+
 /*==================== 送信キュー（呼び出し編集つき） ====================*/
 function outbox(){ try{ return JSON.parse(localStorage.getItem(K_OUTBOX)||'[]'); }catch(e){ return []; } }
 function setOutbox(a){ localStorage.setItem(K_OUTBOX,JSON.stringify(a)); }
@@ -660,10 +738,12 @@ function submitForm(){
   d.clientId='c-'+Date.now()+'-'+Math.floor(Math.random()*1e5);
   var q=outbox(); q.push({payload:d,at:Date.now(),status:'wait'}); setOutbox(q);
   saveLast(d);
-  localStorage.removeItem(K_PREFILL);   // 送信したら次のRKM選択を受け付ける
+  localStorage.removeItem(K_PREFILL);
+  var ck=localStorage.getItem(K_CURKEY); if(ck){ removePilihanLocalByKey(ck); localStorage.removeItem(K_CURKEY); }
   clearForm(false); renderQueue();
   toast(navigator.onLine?'Tersimpan, mengirim…':'Tersimpan (offline). Terkirim saat online.');
   if(navigator.onLine) flushOutbox();
+  showPilihan();   // 送信したら一覧に戻り、残りから次を選ぶ
 }
 function editQueueItem(idx){
   var q=outbox(); if(idx<0||idx>=q.length) return;
@@ -708,7 +788,7 @@ function renderQueue(){ var q=outbox(),w=el('queueList'); el('pendPill').textCon
       '<button class="qbtn edit" onclick="editQueueItem('+i+')">Edit</button></span></div>'; }).join(''); }
 
 /*==================== NET / util ====================*/
-function updateNet(){ el('netStat').innerHTML=navigator.onLine?'<span class="dot on"></span>Online':'<span class="dot off"></span>Offline'; }
+function updateNet(){ var h=navigator.onLine?'<span class="dot on"></span>Online':'<span class="dot off"></span>Offline'; el('netStat').innerHTML=h; var pn=el('pilNet'); if(pn) pn.innerHTML=h; }
 function softRefresh(){
   try{ saveDraftNow(); }catch(e){}
   try{ loadDraft(); renderQueue(); recalc(); }catch(e){}
