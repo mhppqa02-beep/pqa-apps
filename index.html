@@ -152,7 +152,9 @@
     }).catch(function(){ loginErr('Tidak bisa terhubung ke server.'); }).then(function(){ b.disabled=false; b.textContent='Masuk'; }); }
   function doLogout(){ if(!confirm('Keluar?')) return; localStorage.removeItem(K_TOKEN); localStorage.removeItem(K_USER); showLogin(); }
   // ログインは 1 日の最初だけ。日付が変わってもオフライン中はそのまま（現場で締め出されないため）
-  (function(){ var t=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
+  (function(){ if(/[?&]logout=1/.test(location.search)){ localStorage.removeItem(K_TOKEN); localStorage.removeItem(K_USER);   // アプリの Keluar から来た
+      try{ history.replaceState(null,'',location.pathname); }catch(e){} }
+    var t=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
     if(t && (ld===today() || !navigator.onLine)) showApps(); else showLogin(); })();
   var tT; function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show");
     clearTimeout(tT); tT=setTimeout(function(){ t.classList.remove("show"); },2400); }
