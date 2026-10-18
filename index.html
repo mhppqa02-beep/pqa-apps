@@ -28,21 +28,53 @@
   .badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px}
   .b-con{background:#e8f5e9;color:#2e7d32}
   .b-rs{background:#e3f2fd;color:#1565c0}
+  .b-ro{background:#fff3e0;color:#e65100}
   .card h2{margin:0;font-size:17px;font-weight:800}
   .card .desc{margin:3px 0 10px;font-size:12.5px;color:#5a6b80}
   .buka{font-size:13px;font-weight:700;color:#1565c0}
   .card.off .buka{color:#9aa7b2}
+  .hide{display:none!important}
+  .login{max-width:360px;margin:8vh auto 0;background:#fff;border:1px solid #e2e9e4;border-radius:18px;padding:24px 20px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+  .login h1{margin:10px 0 2px;font-size:20px;color:#1b5e20}.login p{margin:0 0 16px;font-size:13px;color:#5a6b80}
+  .login label{display:block;font-size:13px;font-weight:700;color:#33503a;margin:10px 0 4px}
+  .login input{width:100%;padding:12px;border:1.5px solid #cfe0d3;border-radius:10px;font-size:16px}
+  .login button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;background:#2e7d32;color:#fff;font-size:16px;font-weight:800}
+  .login button:disabled{opacity:.6}
+  .err{margin-top:10px;color:#c62828;font-size:13px;font-weight:700}
+  .userbar{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#5a6b80;margin:-6px 4px 6px}
+  .userbar button{border:1px solid #cfe0d3;background:#fff;border-radius:16px;padding:5px 12px;font-size:12px;font-weight:700;color:#5a6b80}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#263238;color:#fff;
     padding:10px 18px;border-radius:22px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none}
   .toast.show{opacity:1}
 </style>
 </head>
 <body>
-<div class="wrap">
+<!-- ログイン（その日の最初だけ） -->
+<div id="loginView" class="login hide">
+  <img src="icon-192.png" alt="" style="width:56px;height:56px;border-radius:14px">
+  <h1>PQA Apps</h1><p>Silakan login untuk masuk.</p>
+  <label>Username</label><input id="lgUser" autocomplete="username" autocapitalize="off">
+  <label>Password</label><input id="lgPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+  <button id="lgBtn" onclick="doLogin()">Masuk</button>
+  <div id="lgErr" class="err hide"></div>
+</div>
+
+<div class="wrap hide" id="appView">
   <header>
     <img src="icon-192.png" alt="PQA Apps">
     <div><h1>PQA Apps</h1><p>PT Musi Hutan Persada &middot; PQA Division</p></div>
   </header>
+
+  <div class="userbar"><span id="hdrUser"></span><button onclick="doLogout()">Keluar</button></div>
+
+  <div class="group">RENCANA OPERASI</div>
+
+  <a class="card" id="c_ro">
+    <span class="badge b-ro">RO</span>
+    <h2>RKM - Pilih Stand</h2>
+    <div class="desc">Pilih Wilayah &amp; Stand dari RKM untuk audit hari ini</div>
+    <span class="buka">Buka &rarr;</span>
+  </a>
 
   <div class="group">INPUT LAPANGAN (OFFLINE)</div>
 
@@ -82,6 +114,7 @@
 <script>
   /*各カードの「Buka」の飛び先。分かったURLをここに貼るだけ。 */
   var LINKS = {
+    ro:   "https://script.google.com/macros/s/AKfycbxT2YQna539cFoh_rpt0obwaJffuUypVvKt4wJkmACTAqpHyvxu3SueXpfzzO2FkFAt/exec",
     col:  "https://mhppqa02-beep.github.io/pqa-apps/Lapangan.html",
     rsol: "https://script.google.com/macros/s/AKfycbxWq_9laf5ccNFV6HFWg7L1F6gyp4YfAkcQXxVIad2eQVk_fc18PPHq9q1uja5sguL0/exec",
     crh:  "https://script.google.com/macros/s/AKfycbxvs4OLIRrAGfgH2lz4pmJaLvNHY9_tzivDK_vx3QZp5_wqXQqBoJmg0tm14_cwI1emrQ/exec",
@@ -90,7 +123,37 @@
   function wire(id,url){ var a=document.getElementById(id);
     if(url && url.indexOf("PASTE_")!==0 && url.indexOf("http")===0){ a.href=url; a.setAttribute("rel","noopener"); }
     else{ a.classList.add("off"); a.addEventListener("click",function(e){ e.preventDefault(); toast("URL belum diatur"); }); } }
-  wire("c_col",LINKS.col); wire("c_rsol",LINKS.rsol); wire("c_crh",LINKS.crh); wire("c_rsrh",LINKS.rsrh);
+  wire("c_ro",LINKS.ro); wire("c_col",LINKS.col); wire("c_rsol",LINKS.rsol); wire("c_crh",LINKS.crh); wire("c_rsrh",LINKS.rsrh);
+  /* RS Input Lapangan は別システムなので、ログインを URL で引き継ぐ（RS 側で Offline System に確認） */
+  document.getElementById("c_rsol").addEventListener("click",function(){ var t=localStorage.getItem(K_TOKEN);
+    if(t) this.href=LINKS.rsol+"?t="+encodeURIComponent(t); });
+
+  /* ===== ログイン：Conventional Input Lapangan と同じ（Offline System の Users シート） =====
+     同じサイトなので、ここでログインすれば Conventional Input Lapangan もログイン済みになる */
+  var GAS_LOGIN="https://script.google.com/macros/s/AKfycbzZU3BGkFkj_Fo6JvUDVTPGU-JAqm3N_iCUuaOOp7f45_jCVz5H3ERFHEK3rrFzDff-0w/exec";
+  var K_TOKEN='pqa_sr_token',K_USER='pqa_sr_user',K_LOGIN_DATE='pqa_sr_logindate',K_MASTERS='pqa_sr_masters',K_PILIHAN='pqa_sr_pilihan',K_DONE='pqa_sr_done',K_WIL='pqa_sr_wil';
+  function el(id){ return document.getElementById(id); }
+  function today(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); }
+  function showApps(){ el('loginView').classList.add('hide'); el('appView').classList.remove('hide');
+    var u=localStorage.getItem(K_USER)||''; el('hdrUser').textContent=u?('Petugas: '+u):''; }
+  function loginErr(m){ var e=el('lgErr'); if(!m){ e.classList.add('hide'); return; } e.textContent=m; e.classList.remove('hide'); }
+  function doLogin(){ var u=el('lgUser').value.trim(), pw=el('lgPass').value;
+    if(!u||!pw) return loginErr('Isi username dan password.');
+    if(!navigator.onLine) return loginErr('Login butuh internet.');
+    loginErr(''); var b=el('lgBtn'); b.disabled=true; b.textContent='Memproses…';
+    fetch(GAS_LOGIN,{method:'POST',body:JSON.stringify({action:'login',username:u,password:pw}),redirect:'follow'}).then(function(r){ return r.json(); }).then(function(r){
+      if(r&&r.ok){ localStorage.setItem(K_TOKEN,r.token); localStorage.setItem(K_USER,r.nama||u); localStorage.setItem(K_LOGIN_DATE,today()); localStorage.removeItem(K_WIL);
+        if(r.masters) localStorage.setItem(K_MASTERS,JSON.stringify(r.masters));
+        if(r.pilihan && typeof r.pilihan.length==='number'){ var done={}; try{ done=JSON.parse(localStorage.getItem(K_DONE)||'{}'); }catch(e){}
+          localStorage.setItem(K_PILIHAN,JSON.stringify(r.pilihan.filter(function(o){ return !done[String(o.key)]; }))); }
+        el('lgPass').value=''; showApps(); }
+      else loginErr(r&&r.error==='invalid'?'Username / password salah.':'Gagal login.');
+    }).catch(function(){ loginErr('Tidak bisa terhubung ke server.'); }).then(function(){ b.disabled=false; b.textContent='Masuk'; }); }
+  function doLogout(){ if(!confirm('Keluar?')) return; localStorage.removeItem(K_TOKEN); localStorage.removeItem(K_USER); showLogin(); }
+  // ログインは 1 日の最初だけ。日付が変わってもオフライン中はそのまま（現場で締め出されないため）
+  (function(){ var t=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
+    if(t && (ld===today() || !navigator.onLine)) showApps(); else showLogin(); })();
   var tT; function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show");
     clearTimeout(tT); tT=setTimeout(function(){ t.classList.remove("show"); },2400); }
   if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
