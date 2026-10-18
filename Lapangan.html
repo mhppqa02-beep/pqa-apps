@@ -95,6 +95,9 @@
   .pil-tbl .num{text-align:right}
   .pil-tbl .pilck{width:22px;height:22px}
   .empty{padding:22px;text-align:center;color:#5a6b80}
+  .wil-btn{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:18px 16px;margin-bottom:12px;font-size:18px;font-weight:800;color:var(--hijau);cursor:pointer}
+  .wil-btn small{display:block;font-size:13px;font-weight:600;color:#5a6b5c;margin-top:2px}
+  .wil-btn.cur{background:var(--mud)}
 </style>
 </head>
 <body>
@@ -114,12 +117,27 @@
   </div>
 </div>
 
+<div id="wilView" class="hide">
+  <header>
+    <h1>Pilih Wilayah <span style="opacity:.7;font-size:12px">· Conventional</span></h1>
+    <div class="sub" id="wilUser">—</div>
+    <div class="statusbar">
+      <button class="logout" onclick="doLogout()" style="margin-left:auto">Keluar</button>
+    </div>
+  </header>
+  <main>
+    <div class="card"><div class="hint">Pilih Wilayah tempat bekerja hari ini. Daftar Stand dan input akan dipisah per Wilayah.</div></div>
+    <div id="wilBtns"></div>
+  </main>
+</div>
+
 <div id="pilihanView" class="hide">
   <header>
     <h1>Daftar Stand (RKM) <span style="opacity:.7;font-size:12px">· Conventional</span></h1>
     <div class="sub" id="pilUser">—</div>
     <div class="statusbar">
       <span id="pilNet"><span class="dot off"></span>Offline</span>
+      <button class="logout" onclick="showWil()" style="margin-left:8px">📍 <span id="pilWil">—</span></button>
       <button class="logout" onclick="startManual()" style="margin-left:auto">✏ Input manual</button>
       <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
     </div>
@@ -292,7 +310,7 @@
 <script>
 var GAS_URL = "https://script.google.com/macros/s/AKfycbzZU3BGkFkj_Fo6JvUDVTPGU-JAqm3N_iCUuaOOp7f45_jCVz5H3ERFHEK3rrFzDff-0w/exec";
 var GAS_INJECTED = "<?= EXEC_URL ?>";
-if (GAS_INJECTED.indexOf('http')===0) GAS_URL = GAS_INJECTED;
+if (GAS_INJECTED.indexOf('http')===0 && !/\/dev$/.test(GAS_INJECTED)) GAS_URL = GAS_INJECTED;   // テスト用(/dev)で開いても送受信は本番サーバー
 var PREFILL_RAW = "<?= PREFILL ?>";
 var K_TOKEN='pqa_sr_token',K_USER='pqa_sr_user',K_DRAFT='pqa_sr_draft5',K_OUTBOX='pqa_sr_outbox5',K_MASTERS='pqa_sr_masters',K_LAST='pqa_sr_last',K_LOGIN_DATE='pqa_sr_logindate',K_PREFILL='pqa_sr_prefill_done';
 var POHON_UID=0;
@@ -347,7 +365,7 @@ document.addEventListener('DOMContentLoaded',function(){
   pw.addEventListener('input',function(e){ if(e.target.classList.contains('strip')){ recalc(); saveDraft(); } });
   var tok=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
   // 同日ならそのまま。日付が変わってもオフライン中はセッション維持（現場で締め出されないため）
-  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showPilihan(); if(navigator.onLine) refreshMasters(); } else { showLogin(); }
+  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showWil(); if(navigator.onLine) refreshMasters(); } else { showLogin(); }   // アプリを開くたびに Wilayah 選択から
   updateNet();
   window.addEventListener('online',function(){ updateNet(); flushOutbox(); });
   window.addEventListener('offline',updateNet);
@@ -360,11 +378,11 @@ function hasUnsaved(){ var f=false; try{ var o=JSON.parse(localStorage.getItem(K
 
 /*==================== LOGIN ====================*/
 function togglePw(){ var p=el('lgPass'); if(p.type==='password'){ p.type='text'; el('pwEye').textContent='🙈'; } else { p.type='password'; el('pwEye').textContent='👁'; } }
-function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); el('pilihanView').classList.add('hide'); }
+function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); el('pilihanView').classList.add('hide'); el('wilView').classList.add('hide'); }
 function showApp(){
-  el('loginView').classList.add('hide'); el('pilihanView').classList.add('hide'); el('appView').classList.remove('hide');
+  el('loginView').classList.add('hide'); el('pilihanView').classList.add('hide'); el('wilView').classList.add('hide'); el('appView').classList.remove('hide');
   var u=localStorage.getItem(K_USER)||''; el('hdrUser').textContent=u?('Petugas: '+u):'';
-  applyMasters(); loadDraft(); applyPrefill(); renderQueue(); recalc(); refreshMasters();
+  applyMasters(); loadDraft(); applyPrefill(); lockWilayah(); renderQueue(); recalc(); refreshMasters();
   if(navigator.onLine) flushOutbox();   // ログイン直後に溜まったデータを送る
 }
 function refreshMasters(){
@@ -381,7 +399,7 @@ function doLogin(){
     if(r&&r.ok){ localStorage.setItem(K_TOKEN,r.token); localStorage.setItem(K_USER,r.nama||user); localStorage.setItem(K_LOGIN_DATE,today());
       if(r.masters){ MASTERS=r.masters; localStorage.setItem(K_MASTERS,JSON.stringify(r.masters)); }
       storePilihanFromServer(r.pilihan);
-      showPilihan();
+      localStorage.removeItem(K_WIL); showWil();
     } else { loginErr(r&&r.error==='invalid'?'Username / password salah.':'Gagal login.'); }
   }).catch(function(){ loginErr('Tidak bisa terhubung ke server.'); }).then(function(){ btn.disabled=false; btn.textContent='Masuk'; });
 }
@@ -397,7 +415,7 @@ function fillSelect(id,arr,keep){ var s=el(id); if(!s)return; arr=uniqArr(arr); 
 function staffFor(wil){
   var bw=MASTERS.byWilayah||{};
   if(bw[wil]) return {staff:bw[wil].staff||[],supervisors:bw[wil].supervisors||[]};
-  var map={Lematang:'3',Benakat:'2',Subanjerji:'1',Subanjeriji:'1'};
+  var map={Lematang:'3',Benakat:'2',Bunakat:'2',Subanjerji:'1',Subanjeriji:'1','Suban Jeriji':'1'};
   var num=map[wil]||String(wil||'').replace(/[^0-9]/g,'');
   if(num){ for(var k in bw){ if(String(k).replace(/[^0-9]/g,'')===num) return {staff:bw[k].staff||[],supervisors:bw[k].supervisors||[]}; } }
   var all=[],sv=[]; for(var k2 in bw){ (bw[k2].staff||[]).forEach(function(x){all.push(x);}); (bw[k2].supervisors||[]).forEach(function(x){sv.push(x);}); }
@@ -634,7 +652,7 @@ function ensurePohon(){ el('pohonWrap').innerHTML=''; for(var i=0;i<10;i++) addP
 function clearForm(ask){
   if(ask && !confirm('Bersihkan semua isian? Data yang belum dikirim tidak terhapus.')) return;
   localStorage.removeItem(K_DRAFT);
-  ['umur','wilayah','unit','blok','com','stand','au1','au2','au3','supervisor'].forEach(function(id){ setVal(id,''); });
+  ['umur','wilayah','unit','blok','com','stand','au1','au2','au3','supervisor'].forEach(function(id){ setVal(id,''); }); lockWilayah();
   ['stripNo','luas','keterangan','waktuMulai','waktuSelesai','puvPanjang','puvJarakUkur','gpsMulaiE','gpsMulaiN','gpsMulaiZ','gpsMulaiLat','gpsMulaiLng','gpsSelesaiE','gpsSelesaiN','gpsSelesaiZ','gpsSelesaiLat','gpsSelesaiLng'].forEach(function(id){ setVal(id,''); });
   el('gpsMulaiRead').textContent='Mulai: —'; el('gpsSelesaiRead').textContent='Selesai: —';
   el('puvIsi').checked=false; togglePUV(); el('puvJarak').textContent='—';
@@ -676,12 +694,15 @@ function saveDone(d){ try{ localStorage.setItem(K_DONE, JSON.stringify(d||{})); 
 function markDone(key){ if(!key) return; var d=loadDone(); d[String(key)]=1; saveDone(d); }
 /* サーバー取得リストは、完了キーを除外して保存（再取得で復活させない） */
 function storePilihanFromServer(pilihan){ if(pilihan && typeof pilihan.length==='number'){ var done=loadDone(); savePilihanLocal(pilihan.filter(function(o){ return !done[String(o.key)]; })); } }
-function pilihanForThisApp(){ var done=loadDone(); return loadPilihanLocal().filter(function(o){ return (IS_RS_APP?o.isRS:!o.isRS) && !done[String(o.key)]; }); }
+function pilihanForThisApp(){ var done=loadDone(), wn=curWil();
+  return loadPilihanLocal().filter(function(o){ return (IS_RS_APP?o.isRS:!o.isRS) && !done[String(o.key)] && (!wn || wilNum(o.w)===wn); }); }
 function removePilihanLocalByKey(key){ savePilihanLocal(loadPilihanLocal().filter(function(o){ return String(o.key)!==String(key); })); }
 function escP(v){ v=(v==null?'':String(v)); return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function showPilihan(){
-  el('loginView').classList.add('hide'); el('appView').classList.add('hide'); el('pilihanView').classList.remove('hide');
+  if(!curWil()) return showWil();
+  el('loginView').classList.add('hide'); el('appView').classList.add('hide'); el('wilView').classList.add('hide'); el('pilihanView').classList.remove('hide');
+  el('pilWil').textContent='Wilayah '+curWil()+' · '+WIL_NM[curWil()];
   var u=localStorage.getItem(K_USER)||''; el('pilUser').textContent=u?('Petugas: '+u):'';
   el('pilNet').innerHTML=navigator.onLine?'<span class="dot on"></span>Online':'<span class="dot off"></span>Offline';
   renderPilihan();
@@ -705,13 +726,30 @@ function pickPilihan(){
   if(!sel){ toast('Pilih 1 Stand dulu.'); return; }
   var o=list[+sel.getAttribute('data-i')]; if(!o) return;
   clearForm(false);
-  setVal('tglAudit',o.tglRO||today()); setVal('umur',o.umur); setVal('wilayah',o.wil||'Lematang');
+  setVal('tglAudit',o.tglRO||today()); setVal('umur',o.umur); setVal('wilayah',o.wil||WIL_NM[curWil()]||'Lematang');
   setVal('unit',o.unit); setVal('blok',o.blok); setVal('com',o.compt); setVal('stand',o.stand); setVal('luas',o.luas);
   applyStaffFor(el('wilayah').value,true); onUmur();
   localStorage.setItem(K_CURKEY, o.key||''); saveDraftNow();
   showApp(); toast('Stand '+o.stand+' dimuat ✓');
 }
 function startManual(){ localStorage.removeItem(K_CURKEY); clearForm(false); showApp(); toast('Mode input manual.'); }
+
+/*==================== Wilayah 選択（ログイン後、一覧の前） ====================*/
+var K_WIL='pqa_sr_wil', WIL_NM={'1':'Suban Jeriji','2':'Bunakat','3':'Lematang'};
+function curWil(){ var w=localStorage.getItem(K_WIL)||''; return WIL_NM[w]?w:''; }
+function showWil(){
+  el('loginView').classList.add('hide'); el('appView').classList.add('hide'); el('pilihanView').classList.add('hide'); el('wilView').classList.remove('hide');
+  var u=localStorage.getItem(K_USER)||''; el('wilUser').textContent=u?('Petugas: '+u):'';
+  var c=curWil();
+  el('wilBtns').innerHTML=['1','2','3'].map(function(n){
+    return '<button class="wil-btn'+(n===c?' cur':'')+'" onclick="setWil(\''+n+'\')">Wilayah '+n+'<small>'+WIL_NM[n]+(n===c?' · dipilih sekarang':'')+'</small></button>'; }).join('');
+}
+function setWil(n){ if(n!==curWil()) localStorage.removeItem(K_CURKEY); localStorage.setItem(K_WIL,n); showPilihan(); toast('Wilayah '+n+' · '+WIL_NM[n]+' ✓');
+  if(navigator.onLine) refreshMasters(); }   // RO アプリで選んだ最新の Stand を取得
+/* フォームの Wilayah は選んだものに固定（Wilayah ごとに入力を分ける） */
+function lockWilayah(){ var w=curWil(), f=el('wilayah'); if(!w||!f) return;
+  if(wilNum(f.value)!==w && !new RegExp(WIL_NM[w].split(' ')[0],'i').test(f.value)) f.value=WIL_NM[w];
+  f.readOnly=true; applyStaffFor(f.value,true); }
 
 /*==================== 送信キュー（呼び出し編集つき） ====================*/
 function outbox(){ try{ return JSON.parse(localStorage.getItem(K_OUTBOX)||'[]'); }catch(e){ return []; } }
