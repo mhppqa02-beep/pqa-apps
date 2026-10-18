@@ -40,6 +40,10 @@
   .login input{width:100%;padding:12px;border:1.5px solid #cfe0d3;border-radius:10px;font-size:16px}
   .login button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;background:#2e7d32;color:#fff;font-size:16px;font-weight:800}
   .login button:disabled{opacity:.6}
+  .pwwrap{position:relative}.pwwrap input{padding-right:44px}
+  .login .pweye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:auto;margin:0;background:transparent;border:0;font-size:18px;padding:4px 6px;color:#5a6b5c}
+  .wbtn{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #e2e9e4;border-radius:14px;padding:16px;margin-bottom:12px;font-size:18px;font-weight:800;color:#1b5e20;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .wbtn small{display:block;font-size:13px;font-weight:600;color:#5a6b80;margin-top:2px}
   .err{margin-top:10px;color:#c62828;font-size:13px;font-weight:700}
   .userbar{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#5a6b80;margin:-6px 4px 6px}
   .userbar button{border:1px solid #cfe0d3;background:#fff;border-radius:16px;padding:5px 12px;font-size:12px;font-weight:700;color:#5a6b80}
@@ -54,9 +58,20 @@
   <img src="icon-192.png" alt="" style="width:56px;height:56px;border-radius:14px">
   <h1>PQA Apps</h1><p>Silakan login untuk masuk.</p>
   <label>Username</label><input id="lgUser" autocomplete="username" autocapitalize="off">
-  <label>Password</label><input id="lgPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+  <label>Password</label>
+  <div class="pwwrap">
+    <input id="lgPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button type="button" class="pweye" id="pwEye" onclick="togglePw()" aria-label="Lihat password">👁</button>
+  </div>
   <button id="lgBtn" onclick="doLogin()">Masuk</button>
   <div id="lgErr" class="err hide"></div>
+</div>
+
+<!-- Wilayah 選択（ログインの後、ランチャーの前） -->
+<div class="wrap hide" id="wilView">
+  <div class="userbar"><button onclick="backToLogin()">&larr; Kembali</button><span id="wilUser"></span></div>
+  <div class="group">PILIH WILAYAH</div>
+  <div id="wilBtns"></div>
 </div>
 
 <div class="wrap hide" id="appView">
@@ -65,7 +80,7 @@
     <div><h1>PQA Apps</h1><p>PT Musi Hutan Persada &middot; PQA Division</p></div>
   </header>
 
-  <div class="userbar"><span id="hdrUser"></span><button onclick="doLogout()">Keluar</button></div>
+  <div class="userbar"><button onclick="showWilL()">&larr; Kembali</button><span id="hdrUser"></span><button onclick="doLogout()">Keluar</button></div>
 
   <div class="group">RENCANA OPERASI</div>
 
@@ -125,8 +140,10 @@
     else{ a.classList.add("off"); a.addEventListener("click",function(e){ e.preventDefault(); toast("URL belum diatur"); }); } }
   wire("c_ro",LINKS.ro); wire("c_col",LINKS.col); wire("c_rsol",LINKS.rsol); wire("c_crh",LINKS.crh); wire("c_rsrh",LINKS.rsrh);
   /* RS Input Lapangan は別システムなので、ログインを URL で引き継ぐ（RS 側で Offline System に確認） */
-  document.getElementById("c_rsol").addEventListener("click",function(){ var t=localStorage.getItem(K_TOKEN);
-    if(t) this.href=LINKS.rsol+"?t="+encodeURIComponent(t); });
+  document.getElementById("c_rsol").addEventListener("click",function(){ var t=localStorage.getItem(K_TOKEN), w=localStorage.getItem(K_WIL)||'';
+    this.href=LINKS.rsol+"?w="+w+(t?"&t="+encodeURIComponent(t):""); });
+  /* RO アプリは選んだ Wilayah の RKM 一覧を直接開く */
+  document.getElementById("c_ro").addEventListener("click",function(){ var w=localStorage.getItem(K_WIL)||''; if(w) this.href=LINKS.ro+"?w="+w; });
 
   /* ===== ログイン：Conventional Input Lapangan と同じ（Offline System の Users シート） =====
      同じサイトなので、ここでログインすれば Conventional Input Lapangan もログイン済みになる */
@@ -134,9 +151,19 @@
   var K_TOKEN='pqa_sr_token',K_USER='pqa_sr_user',K_LOGIN_DATE='pqa_sr_logindate',K_MASTERS='pqa_sr_masters',K_PILIHAN='pqa_sr_pilihan',K_DONE='pqa_sr_done',K_WIL='pqa_sr_wil';
   function el(id){ return document.getElementById(id); }
   function today(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-  function showLogin(){ el('loginView').classList.remove('hide'); el('appView').classList.add('hide'); }
-  function showApps(){ el('loginView').classList.add('hide'); el('appView').classList.remove('hide');
-    var u=localStorage.getItem(K_USER)||''; el('hdrUser').textContent=u?('Petugas: '+u):''; }
+  var WIL_NM={'1':'Suban Jeriji','2':'Bunakat','3':'Lematang'};
+  function curWilL(){ var w=localStorage.getItem(K_WIL)||''; return WIL_NM[w]?w:''; }
+  function showLogin(){ el('loginView').classList.remove('hide'); el('wilView').classList.add('hide'); el('appView').classList.add('hide'); }
+  function showApps(){ if(!curWilL()) return showWilL();
+    el('loginView').classList.add('hide'); el('wilView').classList.add('hide'); el('appView').classList.remove('hide');
+    var u=localStorage.getItem(K_USER)||'', w=curWilL(); el('hdrUser').textContent=(u?('Petugas: '+u+' · '):'')+'Wilayah '+w+' '+WIL_NM[w]; }
+  /* Wilayah 選択：ここで選んだ Wilayah を各アプリが使う */
+  function showWilL(){ el('loginView').classList.add('hide'); el('appView').classList.add('hide'); el('wilView').classList.remove('hide');
+    var u=localStorage.getItem(K_USER)||''; el('wilUser').textContent=u?('Petugas: '+u):''; var c=curWilL();
+    el('wilBtns').innerHTML=['1','2','3'].map(function(n){ return '<button class="wbtn" onclick="setWilL(\''+n+'\')"'+(n===c?' style="background:#e8f5e9"':'')+'>Wilayah '+n+'<small>'+WIL_NM[n]+'</small></button>'; }).join(''); }
+  function setWilL(n){ localStorage.setItem(K_WIL,n); showApps(); }
+  function backToLogin(){ localStorage.removeItem(K_TOKEN); localStorage.removeItem(K_USER); showLogin(); }
+  function togglePw(){ var p=el('lgPass'); if(p.type==='password'){ p.type='text'; el('pwEye').textContent='🙈'; } else { p.type='password'; el('pwEye').textContent='👁'; } }
   function loginErr(m){ var e=el('lgErr'); if(!m){ e.classList.add('hide'); return; } e.textContent=m; e.classList.remove('hide'); }
   function doLogin(){ var u=el('lgUser').value.trim(), pw=el('lgPass').value;
     if(!u||!pw) return loginErr('Isi username dan password.');
