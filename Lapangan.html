@@ -122,7 +122,8 @@
     <h1>Pilih Wilayah <span style="opacity:.7;font-size:12px">· Conventional</span></h1>
     <div class="sub" id="wilUser">—</div>
     <div class="statusbar">
-      <button class="logout" onclick="doLogout()" style="margin-left:auto">Keluar</button>
+      <button class="logout" onclick="goMenu()" style="margin-left:auto">☰ Menu</button>
+      <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
     </div>
   </header>
   <main>
@@ -139,6 +140,7 @@
       <span id="pilNet"><span class="dot off"></span>Offline</span>
       <button class="logout" onclick="showWil()" style="margin-left:8px">📍 <span id="pilWil">—</span></button>
       <button class="logout" onclick="startManual()" style="margin-left:auto">✏ Input manual</button>
+      <button class="logout" onclick="goMenu()" style="margin-left:8px">☰ Menu</button>
       <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
     </div>
   </header>
@@ -365,7 +367,7 @@ document.addEventListener('DOMContentLoaded',function(){
   pw.addEventListener('input',function(e){ if(e.target.classList.contains('strip')){ recalc(); saveDraft(); } });
   var tok=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
   // 同日ならそのまま。日付が変わってもオフライン中はセッション維持（現場で締め出されないため）
-  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showWil(); if(navigator.onLine) refreshMasters(); } else { showLogin(); }   // アプリを開くたびに Wilayah 選択から
+  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showWil(); if(navigator.onLine) refreshMasters(); } else { goLauncher(''); }   // ログインはランチャーで   // アプリを開くたびに Wilayah 選択から
   updateNet();
   window.addEventListener('online',function(){ updateNet(); flushOutbox(); });
   window.addEventListener('offline',updateNet);
@@ -404,7 +406,11 @@ function doLogin(){
   }).catch(function(){ loginErr('Tidak bisa terhubung ke server.'); }).then(function(){ btn.disabled=false; btn.textContent='Masuk'; });
 }
 function loginErr(m){ var e=el('lgErr'); if(!m){e.classList.add('hide');return;} e.textContent=m; e.classList.remove('hide'); }
-function doLogout(){ if(outbox().length>0 && !confirm('Masih ada data belum terkirim. Tetap keluar?')) return; localStorage.removeItem(K_TOKEN); localStorage.removeItem(K_USER); showLogin(); }
+function doLogout(){ if(outbox().length>0 && !confirm('Masih ada data belum terkirim. Tetap keluar?')) return; localStorage.removeItem(K_TOKEN); localStorage.removeItem(K_USER); goLauncher('?logout=1'); }
+/* ランチャー（PQA Apps）へ。ログインはランチャーで行う */
+var LAUNCHER_URL='https://mhppqa02-beep.github.io/pqa-apps/';
+function goLauncher(q){ window.open(LAUNCHER_URL+(q||''),'_top'); }
+function goMenu(){ try{ saveDraftNow(); }catch(e){} goLauncher(''); }
 
 /*==================== MASTER ====================*/
 function loadMastersCache(){ try{ var m=JSON.parse(localStorage.getItem(K_MASTERS)||'null'); if(m){ MASTERS=m; if(!MASTERS.gulma) MASTERS.gulma=[]; if(!MASTERS.bibit) MASTERS.bibit=[]; } }catch(e){} }
