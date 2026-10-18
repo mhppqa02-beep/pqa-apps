@@ -122,8 +122,8 @@
     <h1>Pilih Wilayah <span style="opacity:.7;font-size:12px">· Conventional</span></h1>
     <div class="sub" id="wilUser">—</div>
     <div class="statusbar">
-      <button class="logout" onclick="goMenu()" style="margin-left:auto">☰ Menu</button>
-      <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
+      <button class="logout" style="margin-left:0" onclick="goMenu()">← Kembali</button>
+      <button class="logout" onclick="doLogout()" style="margin-left:auto">Keluar</button>
     </div>
   </header>
   <main>
@@ -137,6 +137,7 @@
     <h1>Daftar Stand (RKM) <span style="opacity:.7;font-size:12px">· Conventional</span></h1>
     <div class="sub" id="pilUser">—</div>
     <div class="statusbar">
+      <button class="logout" style="margin-left:0" onclick="goMenu()">← Kembali</button>
       <span id="pilNet"><span class="dot off"></span>Offline</span>
       <button class="logout" onclick="showWil()" style="margin-left:8px">📍 <span id="pilWil">—</span></button>
       <button class="logout" onclick="startManual()" style="margin-left:auto">✏ Input manual</button>
@@ -164,10 +165,10 @@
     <h1>PQA Lapangan <span style="opacity:.7;font-size:12px">· v5.5</span></h1>
     <div class="sub" id="hdrUser">—</div>
     <div class="statusbar">
+      <button class="logout" style="margin-left:0" onclick="showPilihan()">← Kembali</button>
       <span id="netStat"><span class="dot off"></span>Offline</span>
       <span class="pill" id="pendPill">0 belum terkirim</span>
-      <button class="logout" onclick="showPilihan()" style="margin-left:auto">← Daftar</button>
-      <button class="logout" onclick="softRefresh()" style="margin-left:8px">🔄 Segarkan</button>
+      <button class="logout" onclick="softRefresh()" style="margin-left:auto">🔄 Segarkan</button>
       <button class="logout" onclick="doLogout()" style="margin-left:8px">Keluar</button>
     </div>
   </header>
@@ -367,7 +368,7 @@ document.addEventListener('DOMContentLoaded',function(){
   pw.addEventListener('input',function(e){ if(e.target.classList.contains('strip')){ recalc(); saveDraft(); } });
   var tok=localStorage.getItem(K_TOKEN), ld=localStorage.getItem(K_LOGIN_DATE);
   // 同日ならそのまま。日付が変わってもオフライン中はセッション維持（現場で締め出されないため）
-  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); showWil(); if(navigator.onLine) refreshMasters(); } else { goLauncher(''); }   // ログインはランチャーで   // アプリを開くたびに Wilayah 選択から
+  if(tok && (ld===today() || !navigator.onLine)){ loadMastersCache(); if(curWil()) showPilihan(); else showWil(); if(navigator.onLine) refreshMasters(); }   // Wilayah はランチャーで選んだもの else { goLauncher(''); }   // ログインはランチャーで   // アプリを開くたびに Wilayah 選択から
   updateNet();
   window.addEventListener('online',function(){ updateNet(); flushOutbox(); });
   window.addEventListener('offline',updateNet);
