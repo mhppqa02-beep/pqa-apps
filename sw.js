@@ -1,5 +1,6 @@
-// sw.js — offline app shell (cache-first)
-var CACHE='pqa-sr-v1';
+// sw.js — offline app shell
+// HTML は「ネット優先」（更新がすぐ届く）、オフライン時だけキャッシュを使う。その他は cache-first。
+var CACHE='pqa-sr-v2';
 var SHELL=['./','./index.html','./manifest.json'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); }).then(function(){ return self.skipWaiting(); }));
@@ -12,6 +13,14 @@ self.addEventListener('fetch',function(e){
   if(req.method!=='GET') return;                 // GASへのPOSTは絶対に触らない
   var url=new URL(req.url);
   if(url.origin!==location.origin) return;        // GAS等の別ドメインは素通し
+  var isHtml=req.mode==='navigate' || /\.html?$/.test(url.pathname) || /\/$/.test(url.pathname);
+  if(isHtml){
+    e.respondWith(
+      fetch(req).then(function(res){ var copy=res.clone(); caches.open(CACHE).then(function(c){ c.put(req,copy); }); return res; })
+                .catch(function(){ return caches.match(req).then(function(hit){ return hit || caches.match('./index.html'); }); })
+    );
+    return;
+  }
   e.respondWith(
     caches.match(req).then(function(hit){
       if(hit) return hit;
